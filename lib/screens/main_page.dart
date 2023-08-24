@@ -2,6 +2,25 @@ import 'package:biri_okusun/screens/read_page.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'settings.dart';
+import 'package:file_picker/file_picker.dart';
+
+List<Color> colorList = [
+  Colors.pink,
+  Colors.blue,
+  Colors.green,
+  Colors.amber,
+  Colors.purple,
+  Colors.brown
+];
+
+List<String> titleList = [
+  'Ürünlerimiz',
+  'Kredi',
+  'Hukuk',
+  'İstihbarat',
+  'İthalat-İhracat',
+  'Döviz'
+];
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -11,6 +30,11 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  PlatformFile? file;
+  Future<void> picksinglefile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -66,7 +90,9 @@ class _MainPageState extends State<MainPage> {
           ],
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed: () {},
+          onPressed: () {
+            picksinglefile();
+          },
           child: const Icon(FontAwesomeIcons.plus),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -75,7 +101,7 @@ class _MainPageState extends State<MainPage> {
           // horizontal, this produces 2 rows.
           crossAxisCount: 2,
           // Generate 100 widgets that display their index in the List.
-          children: List.generate(10, (index) {
+          children: List.generate(6, (index) {
             return Center(
               child: GestureDetector(
                 onTap: () {
@@ -85,9 +111,36 @@ class _MainPageState extends State<MainPage> {
                     ),
                   );
                 },
-                child: Text(
-                  'Kitap ${index + 1}',
-                  style: Theme.of(context).textTheme.headlineSmall,
+                child: Container(
+                  width: 180.0,
+                  height: 300.0,
+                  margin: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    color: colorList[index],
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          titleList[index],
+                          style: const TextStyle(
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 12.0,
+                        ),
+                        const Text(
+                          '23.07.2023',
+                          style: TextStyle(
+                            fontSize: 14.0,
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
                 ),
               ),
             );

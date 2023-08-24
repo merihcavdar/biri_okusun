@@ -1,7 +1,7 @@
-import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../components/drop_list.dart';
+import 'package:syncfusion_flutter_sliders/sliders.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -18,6 +18,8 @@ class _SettingsPageState extends State<SettingsPage> {
     'Fatma',
   ];
   String selectedValue = "Kemal";
+  double _speedValue = 1;
+  double _pitchValue = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -39,25 +41,67 @@ class _SettingsPageState extends State<SettingsPage> {
             padding: const EdgeInsets.all(
               12.0,
             ),
-            child: const Column(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                DropList(
+                const DropList(
                     titleText: "Seslendiren",
                     hintText: "Seslendirici seçiniz",
                     items: ["Ayşe", "Gamze", "Kemal", "Harun"],
                     selectedItem: "Gamze"),
-                DropList(
-                    titleText: "Okuma Hızı",
-                    hintText: "Hız seçiniz",
-                    items: ["0.50x", "0.75x", "1.0x", "1.5x", "1.75x", "2.0x"],
-                    selectedItem: "1.0x"),
-                DropList(
-                    titleText: "Ses Kalınlığı",
-                    hintText: "Kalınlık seçiniz",
-                    items: ["-20", "-10", "-5", "0", "5", "10", "20"],
-                    selectedItem: "0")
+                const SizedBox(
+                  height: 22.0,
+                ),
+                const Text(
+                  'Okuma Hızı',
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SfSlider(
+                  stepSize: .25,
+                  min: 0.50,
+                  max: 2,
+                  value: _speedValue,
+                  interval: 0.25,
+                  showTicks: true,
+                  showLabels: true,
+                  enableTooltip: true,
+                  minorTicksPerInterval: 0,
+                  onChanged: (dynamic value) {
+                    setState(() {
+                      _speedValue = value;
+                    });
+                  },
+                ),
+                const SizedBox(
+                  height: 32.0,
+                ),
+                const Text(
+                  'Ses Kalınlığı',
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SfSlider(
+                  stepSize: 5,
+                  min: -20.0,
+                  max: 20.0,
+                  value: _pitchValue,
+                  interval: 10,
+                  showTicks: true,
+                  showLabels: true,
+                  enableTooltip: true,
+                  minorTicksPerInterval: 1,
+                  onChanged: (dynamic value) {
+                    setState(() {
+                      _pitchValue = value;
+                    });
+                  },
+                ),
               ],
             ),
           ),

@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-          primarySwatch: Colors.teal,
+          primarySwatch: Colors.pink,
           fontFamily: 'Ubuntu',
           textTheme: const TextTheme(
             bodyMedium: TextStyle(
