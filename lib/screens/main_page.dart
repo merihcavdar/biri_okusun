@@ -32,7 +32,7 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   PlatformFile? file;
   Future<void> picksinglefile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    //FilePickerResult? result = await FilePicker.platform.pickFiles();
   }
 
   @override
