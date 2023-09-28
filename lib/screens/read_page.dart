@@ -1,10 +1,13 @@
+import 'dart:typed_data';
+import 'dart:io' show Platform;
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:epub_view/epub_view.dart';
 
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+late EpubController _epubController;
 
 class ReadPage extends StatefulWidget {
   const ReadPage({super.key});
@@ -16,6 +19,18 @@ class ReadPage extends StatefulWidget {
 enum TtsState { playing, stopped, paused, continued }
 
 class _ReadPageState extends State<ReadPage> {
+  @override
+  void initState() {
+    super.initState();
+    _epubController = EpubController(
+      document: EpubDocument.openAsset('assets/epubs/hukuk_tkr_2023.epub'),
+      // Set start point
+      epubCfi: "epubcfi(/6/0[null]!/4/8)",
+    );
+
+    //_epubController.gotoEpubCfi('epubcfi(/6/0/4/20)');
+  }
+
   late FlutterTts flutterTts;
   String? language;
   String? engine;
@@ -38,36 +53,43 @@ class _ReadPageState extends State<ReadPage> {
   bool get isAndroid => !kIsWeb && Platform.isAndroid;
   bool get isWindows => !kIsWeb && Platform.isWindows;
   bool get isWeb => kIsWeb;
-
-  String textToSpeech =
-      "Maximiles Black\'i Tanıyın. Onunla hedef tutturma, uçuş tablosu gibi zorluklarla uğraşmadan nereye, ne kadara uçacağınızın kararını siz verirsiniz. Maximiles Black\'e Maximum Mobil, İşCep uygulamalarımız ve Şubelerimiz üzerinden başvurabilirsiniz. Hayal kurmanın sınırının olmadığı, harcadıkça ayrıcalık kazandığınız ayrıcalıklarla dolu bir dünyayı Maximiles Black ile keşfedin. Maximiles Black ile yapacağınız alışverişlerden, varlık birikiminize göre artan oranlarda MaxiMil kazanabilir, size özel ayrıcalıkların keyfini yaşayabilirsiniz. Üstelik Maximiles Black’in sundukları bunlarla sınırlı değil. Karmaşık mil hesaplarıyla uğraştırmadan, tüm alışverişlerinizde MaxiMil kazandırarak bölge ve yolcu kotaları olmadan kolayca uçmanızı sağlayan Maximiles Black, sahip olduğu Maximum özellikleri ile puan, taksit ve indirim fırsatlarından da yararlanmanızı sağlıyor.";
-  @override
-  void initState() {
-    super.initState();
-    initTts();
-  }
+  var cfi;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: Column(
-          children: [
-            _inputSection(),
-            _btnSection(),
-            _engineSection(),
-            _futureBuilder(),
-            _buildSliders(),
-            if (isAndroid) _getMaxSpeechInputLengthSection(),
-          ],
+      appBar: AppBar(
+        title: EpubViewActualChapter(
+          controller: _epubController,
+          builder: (chapterValue) => Text(
+            chapterValue?.chapter?.Title?.replaceAll('\n', '').trim() ?? '',
+            textAlign: TextAlign.start,
+          ),
         ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              cfi = _epubController.generateEpubCfi();
+
+              print(cfi);
+            },
+            icon: const Icon(Icons.home),
+          ),
+        ],
       ),
+      drawer: Drawer(
+        child: EpubViewTableOfContents(controller: _epubController),
+      ),
+      body: EpubView(controller: _epubController),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          //Navigator.pop(context);
+          _epubController.gotoEpubCfi(cfi);
+          // print(_epubController.currentValue?.chapter?.HtmlContent);
+          print(_epubController.currentValue?.chapter?.Title);
+
+//          _speak();
         },
-        child: const Icon(FontAwesomeIcons.play),
+        child: const Icon(FontAwesomeIcons.microphone),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
@@ -134,10 +156,6 @@ class _ReadPageState extends State<ReadPage> {
     });
   }
 
-  Future<dynamic> _getLanguages() async => await flutterTts.getLanguages;
-
-  Future<dynamic> _getEngines() async => await flutterTts.getEngines;
-
   Future _getDefaultEngine() async {
     var engine = await flutterTts.getDefaultEngine;
     if (engine != null) {
@@ -153,15 +171,10 @@ class _ReadPageState extends State<ReadPage> {
   }
 
   Future _speak() async {
-    await flutterTts.setVolume(volume);
-    await flutterTts.setSpeechRate(rate);
-    await flutterTts.setPitch(pitch);
-
-    if (_newVoiceText != null) {
-      if (_newVoiceText!.isNotEmpty) {
-        await flutterTts.speak(_newVoiceText!);
-      }
-    }
+    setState(() {
+      _newVoiceText = 'merhaba, merhaba, merhaba, merhaba, merhaba';
+    });
+    await flutterTts.speak(_newVoiceText!);
   }
 
   Future _setAwaitOptions() async {
@@ -182,211 +195,5 @@ class _ReadPageState extends State<ReadPage> {
   void dispose() {
     super.dispose();
     flutterTts.stop();
-  }
-
-  List<DropdownMenuItem<String>> getEnginesDropDownMenuItems(dynamic engines) {
-    var items = <DropdownMenuItem<String>>[];
-    for (dynamic type in engines) {
-      items.add(DropdownMenuItem(
-          value: type as String?, child: Text(type as String)));
-    }
-    return items;
-  }
-
-  void changedEnginesDropDownItem(String? selectedEngine) async {
-    await flutterTts.setEngine(selectedEngine!);
-    language = null;
-    setState(() {
-      engine = selectedEngine;
-    });
-  }
-
-  List<DropdownMenuItem<String>> getLanguageDropDownMenuItems(
-      dynamic languages) {
-    var items = <DropdownMenuItem<String>>[];
-    for (dynamic type in languages) {
-      items.add(DropdownMenuItem(
-          value: type as String?, child: Text(type as String)));
-    }
-    return items;
-  }
-
-  void changedLanguageDropDownItem(String? selectedType) {
-    setState(() {
-      language = selectedType;
-      flutterTts.setLanguage(language!);
-      if (isAndroid) {
-        flutterTts
-            .isLanguageInstalled(language!)
-            .then((value) => isCurrentLanguageInstalled = (value as bool));
-      }
-    });
-  }
-
-  void _onChange(String text) {
-    setState(() {
-      _newVoiceText = text;
-    });
-  }
-
-  Widget _engineSection() {
-    if (isAndroid) {
-      return FutureBuilder<dynamic>(
-          future: _getEngines(),
-          builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
-            if (snapshot.hasData) {
-              return _enginesDropDownSection(snapshot.data);
-            } else if (snapshot.hasError) {
-              return Text('Error loading engines...');
-            } else
-              return Text('Loading engines...');
-          });
-    } else
-      return Container(width: 0, height: 0);
-  }
-
-  Widget _futureBuilder() => FutureBuilder<dynamic>(
-      future: _getLanguages(),
-      builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
-        if (snapshot.hasData) {
-          return _languageDropDownSection(snapshot.data);
-        } else if (snapshot.hasError) {
-          return Text('Error loading languages...');
-        } else
-          return Text('Loading Languages...');
-      });
-
-  Widget _inputSection() => Container(
-      alignment: Alignment.topCenter,
-      padding: EdgeInsets.only(top: 25.0, left: 25.0, right: 25.0),
-      child: TextField(
-        maxLines: 11,
-        minLines: 6,
-        onChanged: (String value) {
-          _onChange(value);
-        },
-      ));
-
-  Widget _btnSection() {
-    return Container(
-      padding: EdgeInsets.only(top: 50.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildButtonColumn(Colors.green, Colors.greenAccent, Icons.play_arrow,
-              'PLAY', _speak),
-          _buildButtonColumn(
-              Colors.red, Colors.redAccent, Icons.stop, 'STOP', _stop),
-          _buildButtonColumn(
-              Colors.blue, Colors.blueAccent, Icons.pause, 'PAUSE', _pause),
-        ],
-      ),
-    );
-  }
-
-  Widget _enginesDropDownSection(dynamic engines) => Container(
-        padding: EdgeInsets.only(top: 50.0),
-        child: DropdownButton(
-          value: engine,
-          items: getEnginesDropDownMenuItems(engines),
-          onChanged: changedEnginesDropDownItem,
-        ),
-      );
-
-  Widget _languageDropDownSection(dynamic languages) => Container(
-      padding: EdgeInsets.only(top: 10.0),
-      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        DropdownButton(
-          value: language,
-          items: getLanguageDropDownMenuItems(languages),
-          onChanged: changedLanguageDropDownItem,
-        ),
-        Visibility(
-          visible: isAndroid,
-          child: Text("Is installed: $isCurrentLanguageInstalled"),
-        ),
-      ]));
-
-  Column _buildButtonColumn(Color color, Color splashColor, IconData icon,
-      String label, Function func) {
-    return Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          IconButton(
-              icon: Icon(icon),
-              color: color,
-              splashColor: splashColor,
-              onPressed: () => func()),
-          Container(
-              margin: const EdgeInsets.only(top: 8.0),
-              child: Text(label,
-                  style: TextStyle(
-                      fontSize: 12.0,
-                      fontWeight: FontWeight.w400,
-                      color: color)))
-        ]);
-  }
-
-  Widget _getMaxSpeechInputLengthSection() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        ElevatedButton(
-          child: Text('Get max speech input length'),
-          onPressed: () async {
-            _inputLength = await flutterTts.getMaxSpeechInputLength;
-            setState(() {});
-          },
-        ),
-        Text("$_inputLength characters"),
-      ],
-    );
-  }
-
-  Widget _buildSliders() {
-    return Column(
-      children: [_volume(), _pitch(), _rate()],
-    );
-  }
-
-  Widget _volume() {
-    return Slider(
-        value: volume,
-        onChanged: (newVolume) {
-          setState(() => volume = newVolume);
-        },
-        min: 0.0,
-        max: 1.0,
-        divisions: 10,
-        label: "Volume: $volume");
-  }
-
-  Widget _pitch() {
-    return Slider(
-      value: pitch,
-      onChanged: (newPitch) {
-        setState(() => pitch = newPitch);
-      },
-      min: 0.5,
-      max: 2.0,
-      divisions: 15,
-      label: "Pitch: $pitch",
-      activeColor: Colors.red,
-    );
-  }
-
-  Widget _rate() {
-    return Slider(
-      value: rate,
-      onChanged: (newRate) {
-        setState(() => rate = newRate);
-      },
-      min: 0.0,
-      max: 1.0,
-      divisions: 10,
-      label: "Rate: $rate",
-      activeColor: Colors.green,
-    );
   }
 }

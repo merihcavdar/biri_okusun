@@ -43,14 +43,30 @@ class _MainPageState extends State<MainPage> {
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
-              const DrawerHeader(
+              DrawerHeader(
                 decoration: BoxDecoration(
-                  color: Colors.teal,
+                  color: Colors.pink.shade100,
                 ),
-                child: Text('Biri Okusun'),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Biri Okusun',
+                      style: TextStyle(
+                        fontFamily: 'Alkatra',
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Container(
+                        height: 50.0,
+                        child: Image.asset('assets/images/biri_okusun.png')),
+                  ],
+                ),
               ),
               ListTile(
                 title: const Text('Seçenekler'),
+                leading: const Icon(Icons.home),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.of(context).push(
@@ -62,6 +78,7 @@ class _MainPageState extends State<MainPage> {
               ),
               ListTile(
                 title: const Text('Hakkında'),
+                leading: const Icon(Icons.info),
                 onTap: () {
                   // Update the state of the app.
                   // ...
@@ -72,7 +89,7 @@ class _MainPageState extends State<MainPage> {
         ),
         appBar: AppBar(
           title: const Text(
-            'Biri Okusun',
+            'Kütüphanem',
             style: TextStyle(
               fontFamily: 'Alkatra',
               fontSize: 24.0,
