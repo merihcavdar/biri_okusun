@@ -35,8 +35,9 @@ dependencies:
   syncfusion_flutter_sliders: ^22.2.10
   file_picker: ^5.3.3
   flutter_tts: ^3.7.0
-  epubx: any
+  epub_kitty_lib: ^2.0.0
   path: any
+  path_provider: ^2.1.1
   
   
 
