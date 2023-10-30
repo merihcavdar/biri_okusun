@@ -18,7 +18,7 @@ class _ReadPageState extends State<ReadPage> {
 
   Future<void> configureTts() async {
     await flutterTts.setLanguage('tr-TR');
-    await flutterTts.setSpeechRate(1.0);
+    await flutterTts.setSpeechRate(2.0);
     await flutterTts.setVolume(1.0);
   }
 
