@@ -36,14 +36,16 @@ class _ReadPageState extends State<ReadPage> {
 
   @override
   void initState() {
-    configureTts();
     super.initState();
+    setState(() {
+      configureTts();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     speakText(
-        'Merhaba, benim adım Merih Çavdar. Umarım bu vesileyle bu işlemi yapabileceğiz.');
+        'Merhaba, benim adım Merih Çavdar. Umarım bu vesileyle bu işlemi yapabileceğiz. Ayrı bir kütüphane kullanıyor olucam.');
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -61,16 +63,20 @@ class _ReadPageState extends State<ReadPage> {
                     themeColor: Theme.of(context).primaryColor,
                     //identifier: "iosBook",
                     scrollDirection: EpubScrollDirection.VERTICAL,
-                    allowSharing: true,
+                    allowSharing: false,
                     enableTts: true,
                     nightMode: true,
                   );
 
                   // get current locator
-                  VocsyEpub.locatorStream.listen((locator) {
-                    print(
-                        'LOCATOR: ${EpubLocator.fromJson(jsonDecode(locator))}');
-                  });
+                  VocsyEpub.locatorStream.listen(
+                    (locator) {
+                      print(locator.toString());
+                      print("right here");
+                      print(
+                          'LOCATOR: ${EpubLocator.fromJson(jsonDecode(locator))}');
+                    },
+                  );
 
                   VocsyEpub.open(
                     filePath,
@@ -92,14 +98,12 @@ class _ReadPageState extends State<ReadPage> {
                 onPressed: () async {
                   VocsyEpub.setConfig(
                     themeColor: Theme.of(context).primaryColor,
-                    //identifier: "iosBook",
                     scrollDirection: EpubScrollDirection.VERTICAL,
-                    allowSharing: true,
                     enableTts: true,
-                    nightMode: true,
                   );
-                  // get current locator
+// get current locator
                   VocsyEpub.locatorStream.listen((locator) {
+                    print("right here");
                     print(
                         'LOCATOR: ${EpubLocator.fromJson(jsonDecode(locator))}');
                   });
