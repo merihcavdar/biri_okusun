@@ -1,5 +1,3 @@
-// ignore_for_file: unused_local_variable
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
@@ -21,7 +19,7 @@ class _ReadPageState extends State<ReadPage> {
   String filePath = "";
 
   void loadFile() async {
-    String fileName = 'epubs/hukuk_tkr_2023.epub';
+    String fileName = 'assets/epubs/hukuk_tkr_2023.epub';
     String fullPath = path.join(Directory.current.path, fileName);
     var targetFile = File(fullPath);
     List<int> bytes = await targetFile.readAsBytes();
