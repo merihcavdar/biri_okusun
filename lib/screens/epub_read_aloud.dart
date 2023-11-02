@@ -2,8 +2,6 @@ import 'package:html/parser.dart';
 import 'package:flutter/material.dart';
 import 'package:epub_view/epub_view.dart';
 import 'dart:async';
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_tts/flutter_tts.dart';
 
 class EpubReadAloud extends StatefulWidget {
@@ -16,34 +14,26 @@ class EpubReadAloud extends StatefulWidget {
 enum TtsState { playing, stopped, paused, continued }
 
 class _EpubReadAloudState extends State<EpubReadAloud> {
-  late FlutterTts flutterTts;
-  String? language;
-  String? engine;
-  double volume = 0.5;
-  double pitch = 1.0;
-  double rate = 0.5;
-  bool isCurrentLanguageInstalled = false;
-
-  String? _newVoiceText;
-  int? _inputLength;
-
-  TtsState ttsState = TtsState.stopped;
-
-  get isPlaying => ttsState == TtsState.playing;
-  get isStopped => ttsState == TtsState.stopped;
-  get isPaused => ttsState == TtsState.paused;
-  get isContinued => ttsState == TtsState.continued;
-
-  bool get isIOS => !kIsWeb && Platform.isIOS;
-  bool get isAndroid => !kIsWeb && Platform.isAndroid;
-  bool get isWindows => !kIsWeb && Platform.isWindows;
-  bool get isWeb => kIsWeb;
-
   late EpubController _epubReaderController;
+
+  FlutterTts flutterTts = FlutterTts();
+
+  Future<void> configureTts() async {
+    await flutterTts.setLanguage('tr-TR');
+    await flutterTts.setSpeechRate(2.0);
+    await flutterTts.setVolume(1.0);
+  }
+
+  void speakText(String text) async {
+    await flutterTts.speak(text);
+  }
+
+  void stopSpeaking() async {
+    await flutterTts.stop();
+  }
 
   @override
   void initState() {
-    initTts();
     _epubReaderController = EpubController(
       document:
           // EpubDocument.openAsset('assets/New-Findings-on-Shirdi-Sai-Baba.epub'),
@@ -57,161 +47,10 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
     super.initState();
   }
 
-  initTts() {
-    flutterTts = FlutterTts();
-
-    _setAwaitOptions();
-
-    if (isAndroid) {
-      _getDefaultEngine();
-      _getDefaultVoice();
-    }
-
-    flutterTts.setStartHandler(() {
-      setState(() {
-        print("Playing");
-        ttsState = TtsState.playing;
-      });
-    });
-
-    if (isAndroid) {
-      flutterTts.setInitHandler(() {
-        setState(() {
-          print("TTS Initialized");
-        });
-      });
-    }
-
-    flutterTts.setCompletionHandler(() {
-      setState(() {
-        print("Complete");
-        ttsState = TtsState.stopped;
-      });
-    });
-
-    flutterTts.setCancelHandler(() {
-      setState(() {
-        print("Cancel");
-        ttsState = TtsState.stopped;
-      });
-    });
-
-    flutterTts.setPauseHandler(() {
-      setState(() {
-        print("Paused");
-        ttsState = TtsState.paused;
-      });
-    });
-
-    flutterTts.setContinueHandler(() {
-      setState(() {
-        print("Continued");
-        ttsState = TtsState.continued;
-      });
-    });
-
-    flutterTts.setErrorHandler((msg) {
-      setState(() {
-        print("error: $msg");
-        ttsState = TtsState.stopped;
-      });
-    });
-  }
-
-  Future<dynamic> _getLanguages() async => await flutterTts.getLanguages;
-
-  Future<dynamic> _getEngines() async => await flutterTts.getEngines;
-
-  Future _getDefaultEngine() async {
-    var engine = await flutterTts.getDefaultEngine;
-    if (engine != null) {
-      print(engine);
-    }
-  }
-
-  Future _getDefaultVoice() async {
-    var voice = await flutterTts.getDefaultVoice;
-    if (voice != null) {
-      print(voice);
-    }
-  }
-
-  Future _speak() async {
-    await flutterTts.setVolume(volume);
-    await flutterTts.setSpeechRate(rate);
-    await flutterTts.setPitch(pitch);
-
-    if (_newVoiceText != null) {
-      if (_newVoiceText!.isNotEmpty) {
-        await flutterTts.speak(_newVoiceText!);
-      }
-    }
-  }
-
-  Future _setAwaitOptions() async {
-    await flutterTts.awaitSpeakCompletion(true);
-  }
-
-  Future _stop() async {
-    var result = await flutterTts.stop();
-    if (result == 1) setState(() => ttsState = TtsState.stopped);
-  }
-
-  Future _pause() async {
-    var result = await flutterTts.pause();
-    if (result == 1) setState(() => ttsState = TtsState.paused);
-  }
-
   @override
   void dispose() {
     super.dispose();
-    flutterTts.stop();
     _epubReaderController.dispose();
-  }
-
-  List<DropdownMenuItem<String>> getEnginesDropDownMenuItems(dynamic engines) {
-    var items = <DropdownMenuItem<String>>[];
-    for (dynamic type in engines) {
-      items.add(DropdownMenuItem(
-          value: type as String?, child: Text(type as String)));
-    }
-    return items;
-  }
-
-  void changedEnginesDropDownItem(String? selectedEngine) async {
-    await flutterTts.setEngine(selectedEngine!);
-    language = null;
-    setState(() {
-      engine = selectedEngine;
-    });
-  }
-
-  List<DropdownMenuItem<String>> getLanguageDropDownMenuItems(
-      dynamic languages) {
-    var items = <DropdownMenuItem<String>>[];
-    for (dynamic type in languages) {
-      items.add(DropdownMenuItem(
-          value: type as String?, child: Text(type as String)));
-    }
-    return items;
-  }
-
-  void changedLanguageDropDownItem(String? selectedType) {
-    setState(() {
-      language = selectedType;
-      flutterTts.setLanguage(language!);
-      if (isAndroid) {
-        flutterTts
-            .isLanguageInstalled(language!)
-            .then((value) => isCurrentLanguageInstalled = (value as bool));
-      }
-    });
-  }
-
-  void _onChange(String text) {
-    setState(() {
-      _newVoiceText = text;
-    });
   }
 
   String _parseHtmlString(String? htmlString) {
@@ -241,8 +80,8 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
                         .currentValue?.chapter?.HtmlContent)
                     .trim();
                 print(htmlContent);
+                speakText(htmlContent);
                 print(_epubReaderController.generateEpubCfi());
-                await flutterTts.speak(htmlContent);
               },
             ),
             IconButton(

@@ -1,6 +1,5 @@
 import 'package:biri_okusun/screens/epub_read_aloud.dart';
 import 'package:flutter/material.dart';
-import 'package:epub_view/epub_view.dart';
 import 'package:flutter/services.dart' show SystemChrome, SystemUiOverlayStyle;
 
 class ReadPage extends StatefulWidget {
