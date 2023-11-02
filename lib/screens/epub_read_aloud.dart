@@ -20,7 +20,7 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
 
   Future<void> configureTts() async {
     await flutterTts.setLanguage('tr-TR');
-    await flutterTts.setSpeechRate(2.0);
+    await flutterTts.setSpeechRate(1.0);
     await flutterTts.setVolume(1.0);
   }
 
@@ -34,11 +34,12 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
 
   @override
   void initState() {
+    configureTts();
     _epubReaderController = EpubController(
       document:
           // EpubDocument.openAsset('assets/New-Findings-on-Shirdi-Sai-Baba.epub'),
-          EpubDocument.openAsset('assets/epubs/hukuk_tkr_2023.epub'),
-      epubCfi: 'epubcfi(/6/0[null]!/4/64)',
+          EpubDocument.openAsset('assets/epubs/yeni_hukuk.epub'),
+      //epubCfi: 'epubcfi(/6/0[null]!/4/64)',
 
       //     'epubcfi(/6/26[id4]!/4/2/2[id4]/22)', // book.epub Chapter 3 paragraph 10
       // epubCfi:
