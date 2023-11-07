@@ -58,7 +58,7 @@ class _MainPageState extends State<MainPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Container(
+                    SizedBox(
                         height: 50.0,
                         child: Image.asset('assets/images/biri_okusun.png')),
                   ],
