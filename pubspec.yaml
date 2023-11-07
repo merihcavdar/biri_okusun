@@ -31,11 +31,17 @@ dependencies:
   flutter:
     sdk: flutter
   font_awesome_flutter: ^10.5.0
+  dropdown_button2: ^2.3.8
+  syncfusion_flutter_sliders: ^22.2.10
   file_picker: ^5.3.3
   flutter_tts: ^3.7.0
+
   html: ^0.15.4
   path: any
   epub_parser: any
+
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
 
 dev_dependencies:
