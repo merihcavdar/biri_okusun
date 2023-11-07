@@ -20,7 +20,7 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
 
   Future<void> configureTts() async {
     await flutterTts.setLanguage('tr-TR');
-    await flutterTts.setSpeechRate(1.0);
+    await flutterTts.setSpeechRate(1.5);
     await flutterTts.setVolume(1.0);
   }
 
@@ -36,14 +36,7 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
   void initState() {
     configureTts();
     _epubReaderController = EpubController(
-      document:
-          // EpubDocument.openAsset('assets/New-Findings-on-Shirdi-Sai-Baba.epub'),
-          EpubDocument.openAsset('assets/epubs/yeni_hukuk.epub'),
-      //epubCfi: 'epubcfi(/6/0[null]!/4/64)',
-
-      //     'epubcfi(/6/26[id4]!/4/2/2[id4]/22)', // book.epub Chapter 3 paragraph 10
-      // epubCfi:
-      //     'epubcfi(/6/6[chapter-2]!/4/2/1612)', // book_2.epub Chapter 16 paragraph 3
+      document: EpubDocument.openAsset('assets/epubs/ithalat-ihracat.epub'),
     );
     super.initState();
   }
@@ -81,15 +74,26 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
                         .currentValue?.chapter?.HtmlContent)
                     .trim();
                 print(htmlContent);
+
                 speakText(htmlContent);
-                print(_epubReaderController.generateEpubCfi());
+                //print(_epubReaderController.currentValue?.chapter?.Title);
+                /* for (var i in _epubReaderController.tableOfContents()) {
+                  print(i.title);
+                  print(i.startIndex);
+                }
+                */
+
+                //print(_epubReaderController.generateEpubCfi());
+                //_epubReaderController
+                //     .gotoEpubCfi('epubcfi(/6/22[chapter05]!/4/2)');
               },
             ),
             IconButton(
-              icon: const Icon(Icons.save_alt),
-              color: Colors.white,
-              onPressed: () => _showCurrentEpubCfi(context),
-            ),
+                icon: const Icon(Icons.save_alt),
+                color: Colors.white,
+                onPressed: () {
+                  _showCurrentEpubCfi(context);
+                }),
           ],
         ),
         drawer: Drawer(
