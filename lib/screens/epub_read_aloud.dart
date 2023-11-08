@@ -1,11 +1,13 @@
 import 'dart:io' as io;
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:epub_parser/epub_parser.dart' as eparser;
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
-var coverImage;
+String bookTitle = "";
 
 class EpubReadAloud extends StatefulWidget {
   const EpubReadAloud({super.key});
@@ -25,6 +27,20 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
     await flutterTts.setVolume(1.0);
   }
 
+  Future<void> readEPUBFile(String epubFilePath) async {
+    try {
+      final bytes = await File(epubFilePath).readAsBytes();
+      final epubBook = await eparser.EpubReader.readBook(bytes);
+
+      for (var chapter in epubBook.Chapters!) {
+        // Extract and read chapter content using Flutter TTS
+        await flutterTts.speak(chapter.ContentFileName!);
+      }
+    } catch (e) {
+      print("Error reading EPUB file: $e");
+    }
+  }
+
   void speakText(String text) async {
     await flutterTts.speak(text);
   }
@@ -36,7 +52,9 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
   @override
   void initState() {
     configureTts();
-    loadEPub();
+    setState(() {
+      loadEPub();
+    });
     super.initState();
   }
 
@@ -46,13 +64,18 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
   }
 
   void loadEPub() async {
-    String fileName = '/assets/epubs/kredi_yeni.epub';
-    String fullPath = path.join(io.Directory.current.path, fileName);
+    io.Directory applicationDirectory =
+        await getApplicationDocumentsDirectory();
+
+    String fullPath =
+        path.join(applicationDirectory.path, "assets/epubs/schrödinger.epub");
+    //String fileName = 'assets/epubs/schrödinger.epub';
+    //String fullPath = path.join(io.Directory.current.path, fileName);
     var targetFile = io.File(fullPath);
     List<int> bytes = await targetFile.readAsBytes();
     eparser.EpubBook epubBook = await eparser.EpubReader.readBook(bytes);
-    String? title = epubBook.Title;
-    String? author = epubBook.Author;
+    bookTitle = epubBook.Title!;
+    //String? author = epubBook.Author;
 
 // Enumerating chapters
     epubBook.Chapters?.forEach((eparser.EpubChapter chapter) {
@@ -82,39 +105,41 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
 // Entire HTML content of the book
     htmlFiles?.values.forEach((eparser.EpubTextContentFile htmlFile) {
       String? htmlContent = htmlFile.Content;
+      print(htmlContent);
     });
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(
-        title: const Text("hello"),
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.headphones),
-            color: Colors.white,
-            onPressed: () async {
-              //String htmlContent = _parseHtmlString().trim();
-              speakText("ben merih");
-              //print(_epubReaderController.currentValue?.chapter?.Title);
-              /* for (var i in _epubReaderController.tableOfContents()) {
+        appBar: AppBar(
+          title: const Text("hello"),
+          actions: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.headphones),
+              color: Colors.white,
+              onPressed: () async {
+                //String htmlContent = _parseHtmlString().trim();
+                speakText("ben merih");
+                //print(_epubReaderController.currentValue?.chapter?.Title);
+                /* for (var i in _epubReaderController.tableOfContents()) {
                   print(i.title);
                   print(i.startIndex);
                 }
                 */
 
-              //print(_epubReaderController.generateEpubCfi());
-              //_epubReaderController
-              //     .gotoEpubCfi('epubcfi(/6/22[chapter05]!/4/2)');
-            },
-          ),
-          IconButton(
-              icon: const Icon(Icons.save_alt),
-              color: Colors.white,
-              onPressed: () {}),
-        ],
-      ),
-      body: Center(
-        child: Image(image: coverImage),
-      ));
+                //print(_epubReaderController.generateEpubCfi());
+                //_epubReaderController
+                //     .gotoEpubCfi('epubcfi(/6/22[chapter05]!/4/2)');
+              },
+            ),
+            IconButton(
+                icon: const Icon(Icons.save_alt),
+                color: Colors.white,
+                onPressed: () {}),
+          ],
+        ),
+        body: Center(
+          child: Text(bookTitle),
+        ),
+      );
 }
