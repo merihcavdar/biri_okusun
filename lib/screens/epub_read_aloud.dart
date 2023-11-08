@@ -23,7 +23,7 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
 
   Future<void> configureTts() async {
     await flutterTts.setLanguage('tr-TR');
-    await flutterTts.setSpeechRate(1.0);
+    await flutterTts.setSpeechRate(1.5);
     await flutterTts.setVolume(1.0);
   }
 
