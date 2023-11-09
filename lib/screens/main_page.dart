@@ -1,8 +1,10 @@
+import 'dart:io' as io;
 import 'package:biri_okusun/screens/read_page.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'settings.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 
 List<Color> colorList = [
   Colors.pink,
@@ -30,9 +32,47 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  PlatformFile? file;
-  Future<void> picksinglefile() async {
-    //FilePickerResult? result = await FilePicker.platform.pickFiles();
+  Future<io.Directory?> getDownloadPath() async {
+    io.Directory? directory;
+    try {
+      if (io.Platform.isIOS) {
+        directory = await getApplicationDocumentsDirectory();
+      } else {
+        directory = io.Directory('/storage/emulated/0/Download');
+        // Put file in global download folder, if for an unknown reason it didn't exist, we fallback
+        // ignore: avoid_slow_async_io
+        if (!await directory.exists()) {
+          directory = await getExternalStorageDirectory();
+        }
+      }
+    } catch (err) {
+      print("Cannot get download folder path");
+    }
+    return directory;
+  }
+
+  Future<void> pickFile() async {
+    io.Directory? downloadPath = await getDownloadsDirectory();
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        initialDirectory: downloadPath!.path,
+        allowMultiple: false,
+        allowedExtensions: ["epub"],
+      );
+
+      if (result != null) {
+        PlatformFile file = result.files.first;
+        print(result.files.single.path);
+        print('File picked: ${file.name}');
+        print('File path: ${file.path}');
+        print('File size: ${file.size}');
+      } else {
+        // User canceled the picker
+      }
+    } catch (e) {
+      print('Error picking file: $e');
+    }
   }
 
   @override
@@ -89,7 +129,7 @@ class _MainPageState extends State<MainPage> {
         ),
         appBar: AppBar(
           title: const Text(
-            'Kütüphanem',
+            'Kitaplık',
             style: TextStyle(
               fontFamily: 'Alkatra',
               fontSize: 24.0,
@@ -108,9 +148,11 @@ class _MainPageState extends State<MainPage> {
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            picksinglefile();
+            pickFile();
           },
-          child: const Icon(FontAwesomeIcons.plus),
+          child: const Icon(
+            FontAwesomeIcons.plus,
+          ),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         body: GridView.count(

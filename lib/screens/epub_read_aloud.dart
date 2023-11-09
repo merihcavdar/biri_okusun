@@ -6,8 +6,7 @@ import 'package:epub_parser/epub_parser.dart' as eparser;
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-
-String bookTitle = "";
+import 'package:permission_handler/permission_handler.dart';
 
 class EpubReadAloud extends StatefulWidget {
   const EpubReadAloud({super.key});
@@ -33,7 +32,6 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
       final epubBook = await eparser.EpubReader.readBook(bytes);
 
       for (var chapter in epubBook.Chapters!) {
-        // Extract and read chapter content using Flutter TTS
         await flutterTts.speak(chapter.ContentFileName!);
       }
     } catch (e) {
@@ -51,11 +49,9 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
 
   @override
   void initState() {
-    configureTts();
-    setState(() {
-      loadEPub();
-    });
     super.initState();
+    configureTts();
+    loadEPub();
   }
 
   @override
@@ -63,50 +59,60 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
     super.dispose();
   }
 
+  Future<Directory?> getDownloadPath() async {
+    Directory? directory;
+    try {
+      if (Platform.isIOS) {
+        directory = await getApplicationDocumentsDirectory();
+      } else {
+        directory = Directory('/storage/emulated/0/Download');
+        // Put file in global download folder, if for an unknown reason it didn't exist, we fallback
+        // ignore: avoid_slow_async_io
+        if (!await directory.exists()) {
+          directory = await getExternalStorageDirectory();
+        }
+      }
+    } catch (err) {
+      print("Cannot get download folder path");
+    }
+    return directory;
+  }
+
   void loadEPub() async {
-    io.Directory applicationDirectory =
-        await getApplicationDocumentsDirectory();
-
-    String fullPath =
-        path.join(applicationDirectory.path, "assets/epubs/schrödinger.epub");
-    //String fileName = 'assets/epubs/schrödinger.epub';
-    //String fullPath = path.join(io.Directory.current.path, fileName);
-    var targetFile = io.File(fullPath);
-    List<int> bytes = await targetFile.readAsBytes();
-    eparser.EpubBook epubBook = await eparser.EpubReader.readBook(bytes);
-    bookTitle = epubBook.Title!;
-    //String? author = epubBook.Author;
-
+    var status = await Permission.storage.status;
+    if (status.isDenied) {
+      if (await Permission.storage.request().isGranted) {
+        io.Directory? downloadDirectory = await getDownloadPath();
+        String fullPath =
+            path.join(downloadDirectory!.path, "ithalat-ihracat_tkr_2023.epub");
+        var targetFile = io.File(fullPath);
+        List<int> bytes = await targetFile.readAsBytes();
+        eparser.EpubBook epubBook = await eparser.EpubReader.readBook(bytes);
+        //String? author = epubBook.Author;
 // Enumerating chapters
-    epubBook.Chapters?.forEach((eparser.EpubChapter chapter) {
-      // Title of chapter
-      String? chapterTitle = chapter.Title;
-
-      // HTML content of current chapter
-      String? chapterHtmlContent = chapter.HtmlContent;
-
-      // Nested chapters
-      List<eparser.EpubChapter>? subChapters = chapter.SubChapters;
-      print(chapterTitle);
-      print(chapterHtmlContent);
-      print(subChapters);
-    });
-
-// CONTENT
-
+        epubBook.Chapters?.forEach(
+          (eparser.EpubChapter chapter) {
+            // Title of chapter
+            String? chapterTitle = chapter.Title;
+            print(chapterTitle);
+            // HTML content of current chapter
+            String? chapterHtmlContent = chapter.HtmlContent;
+            // Nested chapters
+            List<eparser.EpubChapter>? subChapters = chapter.SubChapters;
+          },
+        );
 // Book's content (HTML files, stylesheets, images, fonts, etc.)
-    eparser.EpubContent? bookContent = epubBook.Content;
-
+        eparser.EpubContent? bookContent = epubBook.Content;
 // HTML & CSS
-
 // All XHTML files in the book (file name is the key)
-    Map<String, eparser.EpubTextContentFile>? htmlFiles = bookContent?.Html;
-
+        Map<String, eparser.EpubTextContentFile>? htmlFiles = bookContent?.Html;
 // Entire HTML content of the book
-    htmlFiles?.values.forEach((eparser.EpubTextContentFile htmlFile) {
-      String? htmlContent = htmlFile.Content;
-      print(htmlContent);
-    });
+        htmlFiles?.values.forEach((eparser.EpubTextContentFile htmlFile) {
+          String? htmlContent = htmlFile.Content;
+          //print(htmlContent);
+        });
+      }
+    }
   }
 
   @override
@@ -138,8 +144,8 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
                 onPressed: () {}),
           ],
         ),
-        body: Center(
-          child: Text(bookTitle),
+        body: const Center(
+          child: Text("merih"),
         ),
       );
 }
