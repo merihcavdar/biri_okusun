@@ -1,7 +1,6 @@
 import 'dart:io' as io;
 import 'package:biri_okusun/data/database.dart';
-import 'package:biri_okusun/screens/read_page.dart';
-import 'package:epub_parser/epub_parser.dart';
+import 'package:biri_okusun/screens/epub_read_aloud.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'settings.dart';
@@ -10,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart' as img;
+import '../utilities/disk.dart';
 
 List<Color> colorList = [
   Colors.green.shade100,
@@ -30,23 +30,7 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   final _myBox = Hive.box('myBox');
   EpubData epubData = EpubData();
-
-  Future<io.Directory?> getDownloadPath() async {
-    io.Directory? directory;
-    try {
-      if (io.Platform.isIOS) {
-        directory = await getApplicationDocumentsDirectory();
-      } else {
-        directory = io.Directory('/storage/emulated/0/Download');
-        if (!await directory.exists()) {
-          directory = await getExternalStorageDirectory();
-        }
-      }
-    } catch (err) {
-      print("Cannot get download folder path");
-    }
-    return directory;
-  }
+  late String fileName;
 
   bool ifExists(String fileName) {
     for (var eachFile in epubData.bookList) {
@@ -69,14 +53,17 @@ class _MainPageState extends State<MainPage> {
 
       if (result != null) {
         PlatformFile file = result.files.first;
-        String fileName = file.name;
+        fileName = file.name;
+        List fileDetails = [];
+        fileDetails = await getEpubDetails(fileName);
         setState(() {
           if (ifExists(fileName)) {
             epubData.bookList.add({
               "fileName": fileName,
-              "bookTitle": "Lorem",
-              "lastChapter": "Ipsum"
+              "bookTitle": fileDetails[0],
+              "lastChapter": fileDetails[1],
             });
+            epubData.updateDatabase();
           } else {
             var snackBar = const SnackBar(
                 content: Text('Seçtiğiniz kitap zaten kitaplıkta yer alıyor.'));
@@ -98,7 +85,6 @@ class _MainPageState extends State<MainPage> {
     } else {
       epubData.loadData();
     }
-    print(epubData.bookList);
     super.initState();
   }
 
@@ -210,22 +196,24 @@ class _MainPageState extends State<MainPage> {
                   motion: const ScrollMotion(),
 
                   // A pane can dismiss the Slidable.
-                  dismissible: DismissiblePane(onDismissed: () {
-                    setState(() {
-                      epubData.deleteDatabase(index);
-                    });
-                    print(epubData.bookList);
-                  }),
+                  dismissible: DismissiblePane(
+                    onDismissed: () {
+                      setState(() {
+                        epubData.deleteDatabase(index);
+                      });
+                    },
+                  ),
 
                   // All actions are defined in the children parameter.
                   children: [
                     // A SlidableAction can have an icon and/or a label.
                     SlidableAction(
                       onPressed: (BuildContext context) {
-                        setState(() {
-                          epubData.bookList.removeAt(index);
-                          epubData.updateDatabase();
-                        });
+                        setState(
+                          () {
+                            epubData.deleteDatabase(index);
+                          },
+                        );
                       },
                       backgroundColor: const Color(0xFFFE4A49),
                       foregroundColor: Colors.white,
@@ -241,7 +229,9 @@ class _MainPageState extends State<MainPage> {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => const ReadPage(),
+                        builder: (context) => EpubReadAloud(
+                          fileToLoad: epubData.bookList[index]["fileName"],
+                        ),
                       ),
                     );
                   },

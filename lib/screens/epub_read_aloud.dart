@@ -1,15 +1,11 @@
-import 'dart:io' as io;
 import 'dart:async';
-import 'dart:io';
+import 'package:biri_okusun/utilities/disk.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:epub_parser/epub_parser.dart' as eparser;
-import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class EpubReadAloud extends StatefulWidget {
-  const EpubReadAloud({super.key});
+  const EpubReadAloud({super.key, required this.fileToLoad});
+  final String fileToLoad;
 
   @override
   State<EpubReadAloud> createState() => _EpubReadAloudState();
@@ -19,24 +15,12 @@ enum TtsState { playing, stopped, paused, continued }
 
 class _EpubReadAloudState extends State<EpubReadAloud> {
   FlutterTts flutterTts = FlutterTts();
+  List chapters = [];
 
   Future<void> configureTts() async {
     await flutterTts.setLanguage('tr-TR');
-    await flutterTts.setSpeechRate(1.5);
+    await flutterTts.setSpeechRate(1.0);
     await flutterTts.setVolume(1.0);
-  }
-
-  Future<void> readEPUBFile(String epubFilePath) async {
-    try {
-      final bytes = await File(epubFilePath).readAsBytes();
-      final epubBook = await eparser.EpubReader.readBook(bytes);
-
-      for (var chapter in epubBook.Chapters!) {
-        await flutterTts.speak(chapter.ContentFileName!);
-      }
-    } catch (e) {
-      print("Error reading EPUB file: $e");
-    }
   }
 
   void speakText(String text) async {
@@ -49,9 +33,9 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
 
   @override
   void initState() {
-    super.initState();
     configureTts();
     loadEPub();
+    super.initState();
   }
 
   @override
@@ -59,67 +43,24 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
     super.dispose();
   }
 
-  Future<Directory?> getDownloadPath() async {
-    Directory? directory;
-    try {
-      if (Platform.isIOS) {
-        directory = await getApplicationDocumentsDirectory();
-      } else {
-        directory = Directory('/storage/emulated/0/Download');
-        // Put file in global download folder, if for an unknown reason it didn't exist, we fallback
-        // ignore: avoid_slow_async_io
-        if (!await directory.exists()) {
-          directory = await getExternalStorageDirectory();
-        }
-      }
-    } catch (err) {
-      print("Cannot get download folder path");
-    }
-    return directory;
-  }
-
   void loadEPub() async {
-    var status = await Permission.storage.status;
-    print(status);
-    if (status.isDenied) {
-      if (await Permission.storage.request().isGranted) {
-        io.Directory? downloadDirectory = await getDownloadPath();
-        String fullPath =
-            path.join(downloadDirectory!.path, "ithalat-ihracat_tkr_2023.epub");
-        var targetFile = io.File(fullPath);
-        List<int> bytes = await targetFile.readAsBytes();
-        eparser.EpubBook epubBook = await eparser.EpubReader.readBook(bytes);
-        print("yep");
-        //String? author = epubBook.Author;
-// Enumerating chapters
-        epubBook.Chapters?.forEach(
-          (eparser.EpubChapter chapter) {
-            print("yep");
-            // Title of chapter
-            String? chapterTitle = chapter.Title;
-            print(chapterTitle);
-            // HTML content of current chapter
-            String? chapterHtmlContent = chapter.HtmlContent;
-            // Nested chapters
-            List<eparser.EpubChapter>? subChapters = chapter.SubChapters;
-          },
-        );
-// Book's content (HTML files, stylesheets, images, fonts, etc.)
-        eparser.EpubContent? bookContent = epubBook.Content;
-// HTML & CSS
-// All XHTML files in the book (file name is the key)
-        Map<String, eparser.EpubTextContentFile>? htmlFiles = bookContent?.Html;
-// Entire HTML content of the book
-        htmlFiles?.values.forEach((eparser.EpubTextContentFile htmlFile) {
-          String? htmlContent = htmlFile.Content;
-          //print(htmlContent);
-        });
-      }
-    }
+    chapters = await getEpubChapters(widget.fileToLoad);
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
+        drawer: Drawer(
+          child: ListView.builder(
+            itemBuilder: (context, index) {
+              return ListTile(
+                title: Text(chapters[index]),
+                onTap: () {},
+              );
+            },
+            itemCount: chapters.length,
+            padding: EdgeInsets.zero,
+          ),
+        ),
         appBar: AppBar(
           title: const Text("hello"),
           actions: <Widget>[
