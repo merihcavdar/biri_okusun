@@ -80,6 +80,7 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
 
   void loadEPub() async {
     var status = await Permission.storage.status;
+    print(status);
     if (status.isDenied) {
       if (await Permission.storage.request().isGranted) {
         io.Directory? downloadDirectory = await getDownloadPath();
@@ -88,10 +89,12 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
         var targetFile = io.File(fullPath);
         List<int> bytes = await targetFile.readAsBytes();
         eparser.EpubBook epubBook = await eparser.EpubReader.readBook(bytes);
+        print("yep");
         //String? author = epubBook.Author;
 // Enumerating chapters
         epubBook.Chapters?.forEach(
           (eparser.EpubChapter chapter) {
+            print("yep");
             // Title of chapter
             String? chapterTitle = chapter.Title;
             print(chapterTitle);

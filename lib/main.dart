@@ -2,20 +2,10 @@ import 'package:flutter/material.dart';
 import 'screens/main_page.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-@HiveType(typeId: 0)
-class Epub {
-  @HiveField(0)
-  late String fileName;
-
-  @HiveField(1)
-  late String bookTitle;
-
-  @HiveField(2)
-  late String bookAuthor;
-}
-
 void main() async {
   await Hive.initFlutter();
+  var box = await Hive.openBox('myBox');
+
   runApp(
     const MyApp(),
   );
