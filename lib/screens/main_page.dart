@@ -35,10 +35,10 @@ class _MainPageState extends State<MainPage> {
   bool ifExists(String fileName) {
     for (var eachFile in epubData.bookList) {
       if (eachFile["fileName"] == fileName) {
-        return false;
+        return true;
       }
     }
-    return true;
+    return false;
   }
 
   Future<void> pickFile() async {
@@ -50,26 +50,32 @@ class _MainPageState extends State<MainPage> {
         allowMultiple: false,
         allowedExtensions: ["epub"],
       );
-
       if (result != null) {
         PlatformFile file = result.files.first;
         fileName = file.name;
         List fileDetails = [];
         fileDetails = await getEpubDetails(fileName);
-        setState(() {
-          if (ifExists(fileName)) {
-            epubData.bookList.add({
-              "fileName": fileName,
-              "bookTitle": fileDetails[0],
-              "lastChapter": fileDetails[1],
-            });
-            epubData.updateDatabase();
-          } else {
-            var snackBar = const SnackBar(
-                content: Text('Seçtiğiniz kitap zaten kitaplıkta yer alıyor.'));
-            ScaffoldMessenger.of(context).showSnackBar(snackBar);
-          }
-        });
+        setState(
+          () {
+            if (!ifExists(fileName)) {
+              epubData.bookList.add(
+                {
+                  "bookTitle": fileDetails[0],
+                  "lastChapter": fileDetails[4],
+                  "fileName": fileDetails[2],
+                  "author": fileDetails[3],
+                },
+              );
+              epubData.updateDatabase();
+            } else {
+              var snackBar = SnackBar(
+                content:
+                    Text('Seçtiğiniz $fileName zaten kitaplıkta yer alıyor.'),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+            }
+          },
+        );
       } else {
         // User canceled the picker
       }
@@ -80,12 +86,12 @@ class _MainPageState extends State<MainPage> {
 
   @override
   void initState() {
+    super.initState();
     if (_myBox.get("EPUBDATA") == null) {
       epubData.createInitialData();
     } else {
       epubData.loadData();
     }
-    super.initState();
   }
 
   @override
@@ -102,8 +108,8 @@ class _MainPageState extends State<MainPage> {
             padding: EdgeInsets.zero,
             children: [
               DrawerHeader(
-                decoration: BoxDecoration(
-                  color: Colors.pink.shade100,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -118,13 +124,15 @@ class _MainPageState extends State<MainPage> {
                     ),
                     SizedBox(
                       height: 50.0,
-                      child: img.Image.asset('assets/images/biri_okusun.png'),
+                      child: img.Image.asset(
+                        'assets/images/biri_okusun.png',
+                      ),
                     ),
                   ],
                 ),
               ),
               ListTile(
-                title: const Text('Seçenekler'),
+                title: const Text('Ayarlar'),
                 leading: const Icon(Icons.home),
                 onTap: () {
                   Navigator.pop(context);
@@ -158,10 +166,12 @@ class _MainPageState extends State<MainPage> {
           actions: [
             IconButton(
               onPressed: () {
-                setState(() {
-                  epubData.bookList = [];
-                  epubData.updateDatabase();
-                });
+                setState(
+                  () {
+                    epubData.bookList = [];
+                    epubData.updateDatabase();
+                  },
+                );
 
                 /*Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => const SettingsPage()));
@@ -181,21 +191,15 @@ class _MainPageState extends State<MainPage> {
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         body: GridView.count(
-          // Create a grid with 2 columns. If you change the scrollDirection to
-          // horizontal, this produces 2 rows.
           crossAxisCount: 2,
-          // Generate 100 widgets that display their index in the List.
           children: List.generate(epubData.bookList.length, (index) {
             return Center(
               child: Slidable(
-                key: ValueKey(epubData.bookList[index]["fileName"]),
-
-                // The start action pane is the one at the left or the top side.
+                key: ValueKey(
+                  epubData.bookList[index]["fileName"],
+                ),
                 startActionPane: ActionPane(
-                  // A motion is a widget used to control how the pane animates.
                   motion: const ScrollMotion(),
-
-                  // A pane can dismiss the Slidable.
                   dismissible: DismissiblePane(
                     onDismissed: () {
                       setState(() {
@@ -203,10 +207,7 @@ class _MainPageState extends State<MainPage> {
                       });
                     },
                   ),
-
-                  // All actions are defined in the children parameter.
                   children: [
-                    // A SlidableAction can have an icon and/or a label.
                     SlidableAction(
                       onPressed: (BuildContext context) {
                         setState(
@@ -222,22 +223,21 @@ class _MainPageState extends State<MainPage> {
                     ),
                   ],
                 ),
-
-                // The end action pane is the one at the right or the bottom side.
-
                 child: GestureDetector(
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => EpubReadAloud(
                           fileToLoad: epubData.bookList[index]["fileName"],
+                          indexNo: index,
                         ),
                       ),
                     );
                   },
                   child: Container(
                     width: 200,
-                    height: 300.0,
+                    height: 500.0,
+                    padding: const EdgeInsets.all(8.0),
                     margin: const EdgeInsets.only(
                       left: 8.0,
                       top: 8.0,
@@ -246,37 +246,39 @@ class _MainPageState extends State<MainPage> {
                     ),
                     decoration: BoxDecoration(
                       color: colorList[index],
+                      borderRadius: BorderRadius.circular(12.0),
                     ),
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            epubData.bookList[index]["bookTitle"] ?? "nope",
-                            //titleList[index],
+                            epubData.bookList[index]["bookTitle"],
                             style: const TextStyle(
                               fontSize: 20.0,
                               fontWeight: FontWeight.bold,
                             ),
+                            textAlign: TextAlign.center,
                           ),
                           const SizedBox(
                             height: 12.0,
                           ),
                           Text(
-                            epubData.bookList[index]["lastChapter"] ?? "",
+                            epubData.bookList[index]["author"],
                             style: const TextStyle(
-                              fontSize: 14.0,
+                              fontSize: 16.0,
                             ),
-                            textAlign: TextAlign.left,
+                            textAlign: TextAlign.center,
                           ),
                           const SizedBox(
                             height: 20.0,
                           ),
                           Text(
-                            epubData.bookList[index]["fileName"] ?? "",
+                            epubData.bookList[index]["lastChapter"],
                             style: const TextStyle(
-                              fontSize: 10.0,
+                              fontSize: 14.0,
                             ),
+                            textAlign: TextAlign.center,
                           ),
                         ],
                       ),

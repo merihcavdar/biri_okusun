@@ -1,13 +1,17 @@
 // ignore_for_file: unused_local_variable
-
 import 'dart:io';
 import 'dart:io' as io;
+import 'package:biri_okusun/data/database.dart';
 import 'package:epub_parser/epub_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path/path.dart' as path;
+import 'package:hive_flutter/hive_flutter.dart';
+
+final _myBox = Hive.box('myBox');
+EpubData epubData = EpubData();
 
 Future<Directory?> getDownloadPath() async {
   Directory? directory;
@@ -29,7 +33,7 @@ Future<Directory?> getDownloadPath() async {
 }
 
 Future<List> getEpubDetails(String fileToLoad) async {
-  List epubDetails = [];
+  List<dynamic> epubDetails = [];
 
   var status = await Permission.storage.status;
   if (status.isDenied) {
@@ -39,18 +43,14 @@ Future<List> getEpubDetails(String fileToLoad) async {
       var targetFile = io.File(fullPath);
       List<int> bytes = await targetFile.readAsBytes();
       EpubBook epubBook = await EpubReader.readBook(bytes);
-      epubDetails.add(epubBook.Title);
-      epubDetails.add(epubBook.Author);
 
-      /*epubBook.Chapters?.forEach(
-        (EpubChapter chapter) {
-          String? chapterTitle = chapter.Title;
-          print(chapterTitle);
-          String? chapterHtmlContent = chapter.HtmlContent;
-          List<EpubChapter>? subChapters = chapter.SubChapters;
-        },
-      );
-      */
+      String? lastChapter = epubBook.Chapters?.elementAt(0).Title;
+
+      epubDetails.add(epubBook.Title);
+      epubDetails.add(lastChapter ?? "");
+      epubDetails.add(fileToLoad);
+      epubDetails.add(epubBook.Author);
+      epubDetails.add(0);
     }
   } else {
     io.Directory? downloadDirectory = await getDownloadPath();
@@ -58,19 +58,13 @@ Future<List> getEpubDetails(String fileToLoad) async {
     var targetFile = io.File(fullPath);
     List<int> bytes = await targetFile.readAsBytes();
     EpubBook epubBook = await EpubReader.readBook(bytes);
-    epubDetails.add(epubBook.Title);
-    epubDetails.add(epubBook.Author);
 
-    /* 
-    epubBook.Chapters?.forEach(
-      (EpubChapter chapter) {
-        String? chapterTitle = chapter.Title;
-        
-        //String? chapterHtmlContent = chapter.HtmlContent;
-        //List<EpubChapter>? subChapters = chapter.SubChapters;
-      },
-    );
-    */
+    String? lastChapter = epubBook.Chapters?.elementAt(0).Title;
+
+    epubDetails.add(epubBook.Title);
+    epubDetails.add(lastChapter ?? "");
+    epubDetails.add(fileToLoad);
+    epubDetails.add(epubBook.Author);
   }
   return epubDetails;
 }
@@ -89,8 +83,8 @@ Future<void> readEPUBFile(String epubFilePath) async {
   }
 }
 
-Future<List> getEpubChapters(String fileToLoad) async {
-  List chapters = [];
+Future<List<String>> getEpubChapters(String fileToLoad) async {
+  List<String> chapters = [];
 
   var status = await Permission.storage.status;
   if (status.isDenied) {
@@ -104,7 +98,7 @@ Future<List> getEpubChapters(String fileToLoad) async {
       epubBook.Chapters?.forEach(
         (EpubChapter chapter) {
           String? chapterTitle = chapter.Title;
-          chapters.add(chapterTitle);
+          chapters.add(chapterTitle!.toString());
         },
       );
     }
@@ -118,7 +112,7 @@ Future<List> getEpubChapters(String fileToLoad) async {
     epubBook.Chapters?.forEach(
       (EpubChapter chapter) {
         String? chapterTitle = chapter.Title;
-        chapters.add(chapterTitle);
+        chapters.add(chapterTitle!.toString());
       },
     );
   }
