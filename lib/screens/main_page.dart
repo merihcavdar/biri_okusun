@@ -1,5 +1,6 @@
 import 'dart:io' as io;
 import 'package:biri_okusun/data/database.dart';
+import 'package:biri_okusun/main.dart';
 import 'package:biri_okusun/screens/epub_read_aloud.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -89,10 +90,21 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
     if (_myBox.get("EPUBDATA") == null) {
-      print("yes null");
       epubData.createInitialData();
     } else {
       epubData.loadData();
+    }
+
+    if (_myBox.get("APPDATA") == null) {
+      epubData.createAppData();
+      epubData.appData.add({
+        "dark": false,
+        "voice": "",
+        "speed": 1.0,
+      });
+      epubData.updateAppData();
+    } else {
+      epubData.loadAppData();
     }
   }
 
@@ -166,6 +178,18 @@ class _MainPageState extends State<MainPage> {
           ),
           centerTitle: true,
           actions: [
+            IconButton(
+              onPressed: () {
+                setState(
+                  () {
+                    setState(() {
+                      ThemeData.dark();
+                    });
+                  },
+                );
+              },
+              icon: const Icon(Icons.dark_mode),
+            ),
             IconButton(
               onPressed: () {
                 setState(

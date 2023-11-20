@@ -18,13 +18,19 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-          primarySwatch: Colors.pink,
-          fontFamily: 'Ubuntu',
-          textTheme: const TextTheme(
-            bodyMedium: TextStyle(
-              fontSize: 18.0,
-            ),
-          )),
+        brightness: Brightness.light,
+        primarySwatch: Colors.pink,
+        fontFamily: 'Ubuntu',
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(
+            fontSize: 18.0,
+          ),
+        ),
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+      ),
+      themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
       home: const MainPage(),
     );

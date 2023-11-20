@@ -9,6 +9,13 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path/path.dart' as path;
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:html/parser.dart';
+
+String parseHtmlString(String htmlString) {
+  final document = parse(htmlString);
+  final String parsedString = parse(document.body?.text).documentElement!.text;
+  return parsedString;
+}
 
 final _myBox = Hive.box('myBox');
 EpubData epubData = EpubData();

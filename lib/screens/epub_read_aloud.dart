@@ -46,7 +46,7 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
   }
 
   void speakText(String text) async {
-    await flutterTts.speak(text);
+    await flutterTts.speak(parseHtmlString(text));
   }
 
   void stopSpeaking() async {
@@ -83,9 +83,18 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
     var targetFile = io.File(fullPath);
     List<int> bytes = await targetFile.readAsBytes();
     epubBook = await EpubReader.readBook(bytes);
+    int num = (epubBook.Chapters?.elementAt(chapterIndex)
+                .HtmlContent
+                .toString()
+                .indexOf("</title>") ??
+            0) +
+        8;
+
     setState(
       () {
-        chapterContent = epubBook.Chapters?.elementAt(chapterIndex).HtmlContent;
+        chapterContent = epubBook.Chapters?.elementAt(chapterIndex)
+            .HtmlContent
+            ?.replaceRange(0, num, " ");
       },
     );
     /*epubBook.Chapters?.forEach(
@@ -103,8 +112,17 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
     if (chapterIndex < epubBook.Chapters!.length) {
       chapterIndex++;
     }
+    int num = (epubBook.Chapters?.elementAt(chapterIndex)
+                .HtmlContent
+                .toString()
+                .indexOf("</title>") ??
+            0) +
+        8;
+
     setState(() {
-      chapterContent = epubBook.Chapters?.elementAt(chapterIndex).HtmlContent;
+      chapterContent = epubBook.Chapters?.elementAt(chapterIndex)
+          .HtmlContent
+          ?.replaceRange(0, num, " ");
     });
   }
 
@@ -112,8 +130,16 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
     if (chapterIndex > 0) {
       chapterIndex--;
     }
+    int num = (epubBook.Chapters?.elementAt(chapterIndex)
+                .HtmlContent
+                .toString()
+                .indexOf("</title>") ??
+            0) +
+        8;
     setState(() {
-      chapterContent = epubBook.Chapters?.elementAt(chapterIndex).HtmlContent;
+      chapterContent = epubBook.Chapters?.elementAt(chapterIndex)
+          .HtmlContent
+          ?.replaceRange(0, num, " ");
     });
   }
 
@@ -184,14 +210,18 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
           onPressed: () {
             if (readingAloud) {
               stopSpeaking();
-              setState(() {
-                readingAloud = false;
-              });
+              setState(
+                () {
+                  readingAloud = false;
+                },
+              );
             } else {
               speakText(chapterContent!);
-              setState(() {
-                readingAloud = true;
-              });
+              setState(
+                () {
+                  readingAloud = true;
+                },
+              );
             }
           },
           child: readingAloud

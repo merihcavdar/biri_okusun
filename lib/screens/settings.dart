@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../components/drop_list.dart';
-import 'package:syncfusion_flutter_sliders/sliders.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -11,15 +11,36 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  FlutterTts flutterTts = FlutterTts();
+
   final _formKey = GlobalKey<FormState>();
-  final List<String> items = [
-    'Kemal',
-    'Ayşe',
-    'Fatma',
-  ];
-  String selectedValue = "Kemal";
-  double _speedValue = 1;
-  double _pitchValue = 0;
+  final List<String> items = [];
+  String selectedValue = "";
+  late List<String> allTheVoices;
+
+  Future<void> configureTts() async {
+    await flutterTts.setLanguage('tr-TR');
+    await flutterTts.setSpeechRate(1.0);
+    allTheVoices = await flutterTts.getVoices;
+  }
+
+  List<DropdownMenuItem<String>> getEnginesDropDownMenuItems(dynamic engines) {
+    var items = <DropdownMenuItem<String>>[];
+    for (dynamic type in engines) {
+      items.add(DropdownMenuItem(
+          value: type as String?, child: Text(type as String)));
+    }
+    return items;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    configureTts().whenComplete(() {
+      setState(() {});
+    });
+    print(allTheVoices);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,11 +66,12 @@ class _SettingsPageState extends State<SettingsPage> {
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const DropList(
+                DropList(
                     titleText: "Seslendiren",
                     hintText: "Seslendirici seçiniz",
-                    items: ["Ayşe", "Gamze", "Kemal", "Harun"],
-                    selectedItem: "Gamze"),
+                    //items: ["Gamze", "Mehmet"],
+                    items: allTheVoices.toList(),
+                    selectedItem: ""),
                 const SizedBox(
                   height: 22.0,
                 ),
@@ -60,47 +82,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SfSlider(
-                  stepSize: .25,
-                  min: 0.50,
-                  max: 2,
-                  value: _speedValue,
-                  interval: 0.25,
-                  showTicks: true,
-                  showLabels: true,
-                  enableTooltip: true,
-                  minorTicksPerInterval: 0,
-                  onChanged: (dynamic value) {
-                    setState(() {
-                      _speedValue = value;
-                    });
-                  },
-                ),
                 const SizedBox(
                   height: 32.0,
-                ),
-                const Text(
-                  'Ses Kalınlığı',
-                  textAlign: TextAlign.left,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SfSlider(
-                  stepSize: 5,
-                  min: -20.0,
-                  max: 20.0,
-                  value: _pitchValue,
-                  interval: 10,
-                  showTicks: true,
-                  showLabels: true,
-                  enableTooltip: true,
-                  minorTicksPerInterval: 1,
-                  onChanged: (dynamic value) {
-                    setState(() {
-                      _pitchValue = value;
-                    });
-                  },
                 ),
               ],
             ),
