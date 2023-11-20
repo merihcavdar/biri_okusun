@@ -61,9 +61,10 @@ class _MainPageState extends State<MainPage> {
               epubData.bookList.add(
                 {
                   "bookTitle": fileDetails[0],
-                  "lastChapter": fileDetails[4],
+                  "lastChapter": fileDetails[1],
                   "fileName": fileDetails[2],
                   "author": fileDetails[3],
+                  "lastIndex": fileDetails[4],
                 },
               );
               epubData.updateDatabase();
@@ -88,6 +89,7 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
     if (_myBox.get("EPUBDATA") == null) {
+      print("yes null");
       epubData.createInitialData();
     } else {
       epubData.loadData();

@@ -26,13 +26,14 @@ class EpubReadAloud extends StatefulWidget {
 enum TtsState { playing, stopped, paused, continued }
 
 class _EpubReadAloudState extends State<EpubReadAloud> {
-  EpubBook epubBook = EpubBook();
-  int chapterIndex = 0;
-  bool readingAloud = false;
   // ignore: unused_field
   final _myBox = Hive.box('myBox');
   EpubData epubData = EpubData();
-  String chapterContent = "lorem ipsum";
+  EpubBook epubBook = EpubBook();
+
+  int chapterIndex = 0;
+  bool readingAloud = false;
+  String? chapterContent = "";
 
   List fileDetails = [];
   FlutterTts flutterTts = FlutterTts();
@@ -55,11 +56,18 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
   @override
   void initState() {
     super.initState();
+    if (_myBox.get("EPUBDATA") == null) {
+      epubData.createInitialData();
+    } else {
+      epubData.loadData();
+    }
+    chapterIndex = epubData.bookList[widget.indexNo]["lastIndex"];
     configureTts();
-    loadEpub().whenComplete(() {
+
+    getEpub().whenComplete(() {
       setState(() {});
     });
-    getEpub().whenComplete(() {
+    loadEpub().whenComplete(() {
       setState(() {});
     });
   }
@@ -75,11 +83,11 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
     var targetFile = io.File(fullPath);
     List<int> bytes = await targetFile.readAsBytes();
     epubBook = await EpubReader.readBook(bytes);
-    chapterIndex = epubData.bookList[widget.indexNo]["lastChapter"];
-    print("chapterindex $chapterIndex");
-
-    chapterContent = epubBook.Chapters!.elementAt(chapterIndex).HtmlContent!;
-    print("chaptercontent $chapterContent");
+    setState(
+      () {
+        chapterContent = epubBook.Chapters?.elementAt(chapterIndex).HtmlContent;
+      },
+    );
     /*epubBook.Chapters?.forEach(
         (EpubChapter chapter) {
           String? chapterTitle = chapter.Title;
@@ -91,13 +99,22 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
       */
   }
 
-  Future<void> loadChapter() async {
-    setState(
-      () {
-        chapterContent =
-            epubBook.Chapters?.elementAt(chapterIndex).HtmlContent! ?? "hallo";
-      },
-    );
+  Future<void> nextChapter() async {
+    if (chapterIndex < epubBook.Chapters!.length) {
+      chapterIndex++;
+    }
+    setState(() {
+      chapterContent = epubBook.Chapters?.elementAt(chapterIndex).HtmlContent;
+    });
+  }
+
+  Future<void> prevChapter() async {
+    if (chapterIndex > 0) {
+      chapterIndex--;
+    }
+    setState(() {
+      chapterContent = epubBook.Chapters?.elementAt(chapterIndex).HtmlContent;
+    });
   }
 
   @override
@@ -118,7 +135,13 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
                     stopSpeaking();
                     readingAloud = false;
                     Navigator.of(context).pop();
-                    loadChapter();
+                    epubData.bookList[index]["lastIndex"] = index;
+                    epubData.updateDatabase();
+                    setState(() {
+                      chapterIndex = index;
+                      chapterContent =
+                          epubBook.Chapters?.elementAt(index).HtmlContent;
+                    });
                   },
                 );
               },
@@ -127,7 +150,7 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
           ),
         ),
         appBar: AppBar(
-          title: Text(fileDetails[0]),
+          title: Text(epubData.bookList[widget.indexNo]["bookTitle"]),
           actions: <Widget>[
             IconButton(
               icon: const Icon(FontAwesomeIcons.arrowLeft),
@@ -136,9 +159,7 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
               onPressed: () {
                 setState(
                   () {
-                    if (chapterIndex > 0) {
-                      chapterIndex--;
-                    }
+                    prevChapter();
                   },
                 );
               },
@@ -146,7 +167,9 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
             IconButton(
                 icon: const Icon(FontAwesomeIcons.arrowRight),
                 color: Colors.white,
-                onPressed: () {}),
+                onPressed: () {
+                  nextChapter();
+                }),
             IconButton(
                 icon: const Icon(Icons.close),
                 //icon: const Icon(Icons.exit_to_app_outlined),
@@ -159,15 +182,24 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            speakText(chapterContent);
-            readingAloud = !readingAloud;
+            if (readingAloud) {
+              stopSpeaking();
+              setState(() {
+                readingAloud = false;
+              });
+            } else {
+              speakText(chapterContent!);
+              setState(() {
+                readingAloud = true;
+              });
+            }
           },
           child: readingAloud
               ? const Icon(Icons.stop_circle_outlined)
               : const Icon(Icons.headphones),
         ),
         body: SingleChildScrollView(
-          child: HtmlWidget(chapterContent),
+          child: HtmlWidget(chapterContent!),
         ),
       );
 }

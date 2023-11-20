@@ -65,6 +65,7 @@ Future<List> getEpubDetails(String fileToLoad) async {
     epubDetails.add(lastChapter ?? "");
     epubDetails.add(fileToLoad);
     epubDetails.add(epubBook.Author);
+    epubDetails.add(0);
   }
   return epubDetails;
 }
