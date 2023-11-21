@@ -26,6 +26,12 @@ class EpubReadAloud extends StatefulWidget {
 enum TtsState { playing, stopped, paused, continued }
 
 class _EpubReadAloudState extends State<EpubReadAloud> {
+  final List<String> items = [];
+  late dynamic allTheVoices;
+
+  List<Map<String, String>> voices = [];
+
+  TtsState ttsState = TtsState.stopped;
   // ignore: unused_field
   final _myBox = Hive.box('myBox');
   EpubData epubData = EpubData();
@@ -37,15 +43,44 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
 
   List fileDetails = [];
   FlutterTts flutterTts = FlutterTts();
+
   List<String> chapters = [];
 
   Future<void> configureTts() async {
     await flutterTts.setLanguage('tr-TR');
     await flutterTts.setSpeechRate(1.0);
     await flutterTts.setVolume(1.0);
+
+    allTheVoices = await flutterTts.getVoices;
+    int i = 1;
+    for (var voice in allTheVoices) {
+      if (voice["locale"] == "tr-TR") {
+        voices.add(
+          {
+            "name": voice["name"],
+            "locale": voice["locale"],
+            "item": "Seslendirici $i"
+          },
+        );
+        i++;
+      }
+    }
+    String voiceName = "";
+    for (var voice in voices) {
+      voiceName = voice["name"]!;
+      print(voice["item"]);
+      print(epubData.appData[0]["voice"]);
+      print(voiceName);
+      if (voice["item"] == epubData.appData[0]["voice"]) {
+        await flutterTts.setVoice(
+          {"name": voiceName, "locale": "tr-TR"},
+        );
+      }
+    }
   }
 
   void speakText(String text) async {
+    await flutterTts.awaitSpeakCompletion(true);
     await flutterTts.speak(parseHtmlString(text));
   }
 
@@ -58,9 +93,25 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
     super.initState();
     if (_myBox.get("EPUBDATA") == null) {
       epubData.createInitialData();
+      epubData.updateDatabase();
     } else {
       epubData.loadData();
     }
+
+    if (_myBox.get("APPDATA") == null) {
+      epubData.createAppData();
+      epubData.appData.add(
+        {
+          "dark": false,
+          "voice": "Seslendirici 1",
+          "speed": 1.0,
+        },
+      );
+      epubData.updateAppData();
+    } else {
+      epubData.loadAppData();
+    }
+
     chapterIndex = epubData.bookList[widget.indexNo]["lastIndex"];
     configureTts();
 
@@ -111,6 +162,10 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
   Future<void> nextChapter() async {
     if (chapterIndex < epubBook.Chapters!.length) {
       chapterIndex++;
+      epubData.bookList[widget.indexNo]["lastIndex"] = chapterIndex;
+      epubData.bookList[widget.indexNo]["lastChapter"] =
+          chapters.elementAt(chapterIndex);
+      epubData.updateDatabase();
     }
     int num = (epubBook.Chapters?.elementAt(chapterIndex)
                 .HtmlContent
@@ -119,16 +174,22 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
             0) +
         8;
 
-    setState(() {
-      chapterContent = epubBook.Chapters?.elementAt(chapterIndex)
-          .HtmlContent
-          ?.replaceRange(0, num, " ");
-    });
+    setState(
+      () {
+        chapterContent = epubBook.Chapters?.elementAt(chapterIndex)
+            .HtmlContent
+            ?.replaceRange(0, num, " ");
+      },
+    );
   }
 
   Future<void> prevChapter() async {
     if (chapterIndex > 0) {
       chapterIndex--;
+      epubData.bookList[widget.indexNo]["lastIndex"] = chapterIndex;
+      epubData.bookList[widget.indexNo]["lastChapter"] =
+          chapters.elementAt(chapterIndex);
+      epubData.updateDatabase();
     }
     int num = (epubBook.Chapters?.elementAt(chapterIndex)
                 .HtmlContent
@@ -161,13 +222,24 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
                     stopSpeaking();
                     readingAloud = false;
                     Navigator.of(context).pop();
-                    epubData.bookList[index]["lastIndex"] = index;
+                    epubData.bookList[widget.indexNo]["lastIndex"] = index;
+                    epubData.bookList[widget.indexNo]["lastChapter"] =
+                        chapters.elementAt(chapterIndex);
                     epubData.updateDatabase();
-                    setState(() {
-                      chapterIndex = index;
-                      chapterContent =
-                          epubBook.Chapters?.elementAt(index).HtmlContent;
-                    });
+                    int num = (epubBook.Chapters?.elementAt(index)
+                                .HtmlContent
+                                .toString()
+                                .indexOf("</title>") ??
+                            0) +
+                        8;
+                    setState(
+                      () {
+                        chapterContent = epubBook.Chapters?.elementAt(index)
+                            .HtmlContent
+                            ?.replaceRange(0, num, " ");
+                        chapterIndex = index;
+                      },
+                    );
                   },
                 );
               },
@@ -217,6 +289,12 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
               );
             } else {
               speakText(chapterContent!);
+              flutterTts.setCompletionHandler(() {
+                setState(() {
+                  nextChapter();
+                  speakText(chapterContent!);
+                });
+              });
               setState(
                 () {
                   readingAloud = true;
@@ -225,8 +303,14 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
             }
           },
           child: readingAloud
-              ? const Icon(Icons.stop_circle_outlined)
-              : const Icon(Icons.headphones),
+              ? Icon(
+                  Icons.stop_circle_outlined,
+                  color: Theme.of(context).colorScheme.primary,
+                )
+              : Icon(
+                  Icons.headphones,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
         ),
         body: SingleChildScrollView(
           child: HtmlWidget(chapterContent!),

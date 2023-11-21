@@ -1,7 +1,8 @@
+import 'package:biri_okusun/data/database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../components/drop_list.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -11,35 +12,61 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  final _myBox = Hive.box('myBox');
+  EpubData epubData = EpubData();
+
   FlutterTts flutterTts = FlutterTts();
+
+  String _selectedVoice = "Seslendirici 1";
 
   final _formKey = GlobalKey<FormState>();
   final List<String> items = [];
   String selectedValue = "";
-  late List<String> allTheVoices;
+  late dynamic allTheVoices;
+
+  List<Map<String, String>> voices = [];
 
   Future<void> configureTts() async {
     await flutterTts.setLanguage('tr-TR');
     await flutterTts.setSpeechRate(1.0);
     allTheVoices = await flutterTts.getVoices;
-  }
-
-  List<DropdownMenuItem<String>> getEnginesDropDownMenuItems(dynamic engines) {
-    var items = <DropdownMenuItem<String>>[];
-    for (dynamic type in engines) {
-      items.add(DropdownMenuItem(
-          value: type as String?, child: Text(type as String)));
+    int i = 1;
+    for (var voice in allTheVoices) {
+      if (voice["locale"] == "tr-TR") {
+        voices.add(
+          {
+            "name": voice["name"],
+            "locale": voice["locale"],
+            "item": "Seslendirici $i"
+          },
+        );
+        i++;
+      }
     }
-    return items;
+    for (var i = 0; i < voices.length; i++) {
+      items.add(voices[i]["item"]!);
+    }
   }
 
   @override
   void initState() {
     super.initState();
-    configureTts().whenComplete(() {
-      setState(() {});
-    });
-    print(allTheVoices);
+    configureTts().whenComplete(
+      () {
+        setState(() {});
+      },
+    );
+    if (_myBox.get("APPDATA") == null) {
+      epubData.createAppData();
+      epubData.appData.add({
+        "dark": false,
+        "voice": "",
+        "speed": 1.0,
+      });
+      epubData.updateAppData();
+    } else {
+      epubData.loadAppData();
+    }
   }
 
   @override
@@ -47,14 +74,19 @@ class _SettingsPageState extends State<SettingsPage> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Settings'),
+          title: const Text('Ayarlar'),
           centerTitle: true,
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
+            epubData.appData[0]["voice"] = _selectedVoice;
+            epubData.updateAppData();
             Navigator.pop(context);
           },
-          child: const Icon(FontAwesomeIcons.floppyDisk),
+          child: Icon(
+            FontAwesomeIcons.floppyDisk,
+            color: Theme.of(context).colorScheme.primary,
+          ),
         ),
         body: Form(
           key: _formKey,
@@ -66,25 +98,23 @@ class _SettingsPageState extends State<SettingsPage> {
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                DropList(
-                    titleText: "Seslendiren",
-                    hintText: "Seslendirici seçiniz",
-                    //items: ["Gamze", "Mehmet"],
-                    items: allTheVoices.toList(),
-                    selectedItem: ""),
-                const SizedBox(
-                  height: 22.0,
-                ),
-                const Text(
-                  'Okuma Hızı',
-                  textAlign: TextAlign.left,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(
-                  height: 32.0,
-                ),
+                DropdownButton<String>(
+                  value: _selectedVoice,
+                  items: items.map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(
+                      () {
+                        _selectedVoice = newValue!;
+                      },
+                    );
+                    print(_selectedVoice);
+                  },
+                )
               ],
             ),
           ),

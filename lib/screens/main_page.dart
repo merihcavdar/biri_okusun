@@ -2,6 +2,7 @@ import 'dart:io' as io;
 import 'package:biri_okusun/data/database.dart';
 import 'package:biri_okusun/screens/epub_read_aloud.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'settings.dart';
 import 'package:file_picker/file_picker.dart';
@@ -22,6 +23,15 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  final List<String> items = [];
+  String selectedValue = "";
+  late dynamic allTheVoices;
+
+  List<Map<String, String>> voices = [];
+  FlutterTts flutterTts = FlutterTts();
+
+  String setVoice = "Seslendirici 1";
+
   bool darkMode = false;
   final _myBox = Hive.box('myBox');
   EpubData epubData = EpubData();
@@ -34,6 +44,29 @@ class _MainPageState extends State<MainPage> {
       }
     }
     return false;
+  }
+
+  Future<void> configureTts() async {
+    await flutterTts.setLanguage('tr-TR');
+    await flutterTts.setSpeechRate(1.0);
+    allTheVoices = await flutterTts.getVoices;
+    int i = 1;
+    for (var voice in allTheVoices) {
+      if (voice["locale"] == "tr-TR") {
+        voices.add(
+          {
+            "name": voice["name"],
+            "locale": voice["locale"],
+            "item": "Seslendirici $i"
+          },
+        );
+        i++;
+      }
+    }
+
+    for (var i = 0; i < voices.length; i++) {
+      items.add(voices[i]["item"]!);
+    }
   }
 
   Future<void> pickFile() async {
@@ -91,15 +124,22 @@ class _MainPageState extends State<MainPage> {
 
     if (_myBox.get("APPDATA") == null) {
       epubData.createAppData();
-      epubData.appData.add({
-        "dark": false,
-        "voice": "",
-        "speed": 1.0,
-      });
+      epubData.appData.add(
+        {
+          "dark": false,
+          "voice": "Seslendirici 1",
+          "speed": 1.0,
+        },
+      );
       epubData.updateAppData();
     } else {
       epubData.loadAppData();
     }
+    configureTts().whenComplete(() {
+      setState(
+        () {},
+      );
+    });
     darkMode = widget.isDark;
   }
 
@@ -146,10 +186,18 @@ class _MainPageState extends State<MainPage> {
                 leading: const Icon(Icons.home),
                 onTap: () {
                   Navigator.pop(context);
-                  Navigator.of(context).push(
+                  Navigator.of(context)
+                      .push(
                     MaterialPageRoute(
                       builder: (context) => const SettingsPage(),
                     ),
+                  )
+                      .then(
+                    (value) {
+                      setState(
+                        () {},
+                      );
+                    },
                   );
                 },
               ),
@@ -182,7 +230,9 @@ class _MainPageState extends State<MainPage> {
                 epubData.appData[0]["dark"] = darkMode;
                 epubData.updateAppData();
               },
-              icon: const Icon(Icons.dark_mode),
+              icon: darkMode
+                  ? const Icon(Icons.light_mode)
+                  : const Icon(Icons.dark_mode),
             ),
             IconButton(
               onPressed: () {
@@ -247,13 +297,21 @@ class _MainPageState extends State<MainPage> {
                 ),
                 child: GestureDetector(
                   onTap: () {
-                    Navigator.of(context).push(
+                    Navigator.of(context)
+                        .push(
                       MaterialPageRoute(
                         builder: (context) => EpubReadAloud(
                           fileToLoad: epubData.bookList[index]["fileName"],
                           indexNo: index,
                         ),
                       ),
+                    )
+                        .then(
+                      (value) {
+                        setState(
+                          () {},
+                        );
+                      },
                     );
                   },
                   child: Container(
