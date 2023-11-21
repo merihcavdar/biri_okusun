@@ -1,38 +1,69 @@
+import 'package:biri_okusun/data/database.dart';
+import 'package:biri_okusun/theme/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'screens/main_page.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   await Hive.initFlutter();
   var box = await Hive.openBox('myBox');
 
   runApp(
-    const MyApp(),
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: const MyApp(),
+    ),
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool isDark = false;
+  final _myBox = Hive.box('myBox');
+  EpubData epubData = EpubData();
+
+  Future<void> getDarkBool() async {
+    isDark = epubData.appData[0]["dark"];
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (_myBox.get("APPDATA") == null) {
+      epubData.createAppData();
+      epubData.appData.add({
+        "dark": false,
+        "voice": "",
+        "speed": 1.0,
+      });
+      epubData.updateAppData();
+    } else {
+      epubData.loadAppData();
+    }
+    getDarkBool().whenComplete(
+      () {
+        setState(
+          () {},
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData(
-        brightness: Brightness.light,
-        primarySwatch: Colors.pink,
-        fontFamily: 'Ubuntu',
-        textTheme: const TextTheme(
-          bodyMedium: TextStyle(
-            fontSize: 18.0,
-          ),
-        ),
-      ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-      ),
-      themeMode: ThemeMode.system,
+      theme: Provider.of<ThemeProvider>(context).setInitialMode(),
       debugShowCheckedModeBanner: false,
-      home: const MainPage(),
+      home: MainPage(
+        isDark: isDark,
+      ),
     );
   }
 }

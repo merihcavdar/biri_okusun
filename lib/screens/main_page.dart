@@ -1,6 +1,5 @@
 import 'dart:io' as io;
 import 'package:biri_okusun/data/database.dart';
-import 'package:biri_okusun/main.dart';
 import 'package:biri_okusun/screens/epub_read_aloud.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -11,24 +10,19 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart' as img;
 import '../utilities/disk.dart';
-
-List<Color> colorList = [
-  Colors.green.shade100,
-  Colors.blue.shade100,
-  Colors.grey.shade100,
-  Colors.blueGrey.shade100,
-  Colors.amber.shade100,
-  Colors.purple.shade100,
-];
+import '../theme/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  const MainPage({super.key, required this.isDark});
+  final bool isDark;
 
   @override
   State<MainPage> createState() => _MainPageState();
 }
 
 class _MainPageState extends State<MainPage> {
+  bool darkMode = false;
   final _myBox = Hive.box('myBox');
   EpubData epubData = EpubData();
   late String fileName;
@@ -106,6 +100,7 @@ class _MainPageState extends State<MainPage> {
     } else {
       epubData.loadAppData();
     }
+    darkMode = widget.isDark;
   }
 
   @override
@@ -117,6 +112,7 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.background,
         drawer: Drawer(
           child: ListView(
             padding: EdgeInsets.zero,
@@ -180,13 +176,11 @@ class _MainPageState extends State<MainPage> {
           actions: [
             IconButton(
               onPressed: () {
-                setState(
-                  () {
-                    setState(() {
-                      ThemeData.dark();
-                    });
-                  },
-                );
+                Provider.of<ThemeProvider>(context, listen: false)
+                    .toggleTheme();
+                darkMode = !darkMode;
+                epubData.appData[0]["dark"] = darkMode;
+                epubData.updateAppData();
               },
               icon: const Icon(Icons.dark_mode),
             ),
@@ -211,6 +205,8 @@ class _MainPageState extends State<MainPage> {
           onPressed: () {
             pickFile();
           },
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Colors.white,
           child: const Icon(
             FontAwesomeIcons.plus,
           ),
@@ -271,7 +267,7 @@ class _MainPageState extends State<MainPage> {
                       right: 8.0,
                     ),
                     decoration: BoxDecoration(
-                      color: colorList[index],
+                      color: Theme.of(context).colorScheme.primary,
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     child: Center(
@@ -280,9 +276,10 @@ class _MainPageState extends State<MainPage> {
                         children: [
                           Text(
                             epubData.bookList[index]["bookTitle"],
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 20.0,
                               fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.secondary,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -291,8 +288,9 @@ class _MainPageState extends State<MainPage> {
                           ),
                           Text(
                             epubData.bookList[index]["author"],
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16.0,
+                              color: Theme.of(context).colorScheme.secondary,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -301,8 +299,9 @@ class _MainPageState extends State<MainPage> {
                           ),
                           Text(
                             epubData.bookList[index]["lastChapter"],
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14.0,
+                              color: Theme.of(context).colorScheme.secondary,
                             ),
                             textAlign: TextAlign.center,
                           ),

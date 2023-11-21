@@ -45,6 +45,8 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 
+  provider:
+
   flutter_slidable: ^3.0.1
   flutter_widget_from_html_core: ^0.14.6
 
