@@ -129,6 +129,7 @@ class _MainPageState extends State<MainPage> {
           "dark": false,
           "voice": "Seslendirici 1",
           "speed": 1.0,
+          "locale": "tr-TR",
         },
       );
       epubData.updateAppData();
@@ -227,7 +228,9 @@ class _MainPageState extends State<MainPage> {
                 setState(
                   () {
                     epubData.bookList = [];
+                    epubData.appData = [];
                     epubData.updateDatabase();
+                    epubData.updateAppData();
                   },
                 );
               },

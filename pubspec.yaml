@@ -31,8 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   font_awesome_flutter: ^10.5.0
-  dropdown_button2: ^2.3.8
-  syncfusion_flutter_sliders: ^22.2.10
+  
   file_picker: ^6.1.1
   flutter_tts: ^3.7.0
 
@@ -41,6 +40,7 @@ dependencies:
   epub_parser: any
   path_provider: ^2.1.1
   permission_handler: ^11.0.1
+
 
   hive: ^2.2.3
   hive_flutter: ^1.1.0

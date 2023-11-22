@@ -36,13 +36,22 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    if (_myBox.get("EPUBDATA") == null) {
+      epubData.createInitialData();
+    } else {
+      epubData.loadData();
+    }
+
     if (_myBox.get("APPDATA") == null) {
       epubData.createAppData();
-      epubData.appData.add({
-        "dark": false,
-        "voice": "",
-        "speed": 1.0,
-      });
+      epubData.appData.add(
+        {
+          "dark": false,
+          "voice": "Seslendirici 1",
+          "speed": 1.0,
+          "locale": "tr-TR",
+        },
+      );
       epubData.updateAppData();
     } else {
       epubData.loadAppData();

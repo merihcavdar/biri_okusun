@@ -26,7 +26,7 @@ class EpubReadAloud extends StatefulWidget {
 enum TtsState { playing, stopped, paused, continued }
 
 class _EpubReadAloudState extends State<EpubReadAloud> {
-  int loopCount = 1;
+  late int loopCount;
   final List<String> items = [];
   late dynamic allTheVoices;
 
@@ -48,6 +48,7 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
   List<String> chapters = [];
 
   Future<void> configureTts() async {
+    await flutterTts.awaitSpeakCompletion(true);
     await flutterTts.setLanguage('tr-TR');
     await flutterTts.setSpeechRate(1.0);
     await flutterTts.setVolume(1.0);
@@ -78,31 +79,68 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
   }
 
   void speakText(String text) async {
-    await flutterTts.awaitSpeakCompletion(true);
+    await flutterTts.awaitSpeakCompletion(true).whenComplete(
+      () {
+        setState(
+          () {},
+        );
+      },
+    );
     String plainText = parseHtmlString(text);
     int count = plainText.length;
-    print("length of text: $count");
     int max = 4000;
     loopCount = count ~/ max;
-    print("loopcount value: $loopCount");
 
     for (var i = 0; i <= loopCount; i++) {
       if (i != loopCount) {
-        await flutterTts.speak(
+        await flutterTts
+            .speak(
           plainText.substring(i * max, (i + 1) * max),
+        )
+            .whenComplete(
+          () {
+            setState(
+              () {},
+            );
+          },
         );
       } else {
         int end = (count - ((i * max)) + (i * max));
-        await flutterTts.speak(
+        await flutterTts
+            .speak(
           plainText.substring(i * max, end),
+        )
+            .whenComplete(
+          () {
+            setState(
+              () {},
+            );
+          },
         );
       }
     }
   }
 
   void stopSpeaking() async {
-    await flutterTts.awaitSpeakCompletion(false);
-    await flutterTts.stop();
+    if (loopCount > 0) {
+      await flutterTts.awaitSpeakCompletion(false);
+      await flutterTts.stop().whenComplete(
+        () {
+          setState(
+            () {},
+          );
+        },
+      );
+    } else {
+      flutterTts.awaitSpeakCompletion(true);
+      await flutterTts.stop().whenComplete(
+        () {
+          setState(
+            () {},
+          );
+        },
+      );
+    }
   }
 
   @override
