@@ -26,6 +26,7 @@ class EpubReadAloud extends StatefulWidget {
 enum TtsState { playing, stopped, paused, continued }
 
 class _EpubReadAloudState extends State<EpubReadAloud> {
+  int loopCount = 1;
   final List<String> items = [];
   late dynamic allTheVoices;
 
@@ -68,9 +69,6 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
     String voiceName = "";
     for (var voice in voices) {
       voiceName = voice["name"]!;
-      print(voice["item"]);
-      print(epubData.appData[0]["voice"]);
-      print(voiceName);
       if (voice["item"] == epubData.appData[0]["voice"]) {
         await flutterTts.setVoice(
           {"name": voiceName, "locale": "tr-TR"},
@@ -81,10 +79,29 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
 
   void speakText(String text) async {
     await flutterTts.awaitSpeakCompletion(true);
-    await flutterTts.speak(parseHtmlString(text));
+    String plainText = parseHtmlString(text);
+    int count = plainText.length;
+    print("length of text: $count");
+    int max = 4000;
+    loopCount = count ~/ max;
+    print("loopcount value: $loopCount");
+
+    for (var i = 0; i <= loopCount; i++) {
+      if (i != loopCount) {
+        await flutterTts.speak(
+          plainText.substring(i * max, (i + 1) * max),
+        );
+      } else {
+        int end = (count - ((i * max)) + (i * max));
+        await flutterTts.speak(
+          plainText.substring(i * max, end),
+        );
+      }
+    }
   }
 
   void stopSpeaking() async {
+    await flutterTts.awaitSpeakCompletion(false);
     await flutterTts.stop();
   }
 

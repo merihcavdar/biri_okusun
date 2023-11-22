@@ -224,6 +224,17 @@ class _MainPageState extends State<MainPage> {
           actions: [
             IconButton(
               onPressed: () {
+                setState(
+                  () {
+                    epubData.bookList = [];
+                    epubData.updateDatabase();
+                  },
+                );
+              },
+              icon: const Icon(Icons.delete),
+            ),
+            IconButton(
+              onPressed: () {
                 Provider.of<ThemeProvider>(context, listen: false)
                     .toggleTheme();
                 darkMode = !darkMode;
@@ -236,16 +247,19 @@ class _MainPageState extends State<MainPage> {
             ),
             IconButton(
               onPressed: () {
-                setState(
-                  () {
-                    epubData.bookList = [];
-                    epubData.updateDatabase();
+                Navigator.of(context)
+                    .push(
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsPage(),
+                  ),
+                )
+                    .then(
+                  (value) {
+                    setState(
+                      () {},
+                    );
                   },
                 );
-
-                /*Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const SettingsPage()));
-              */
               },
               icon: const Icon(FontAwesomeIcons.gear),
             ),
