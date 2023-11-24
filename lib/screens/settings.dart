@@ -13,10 +13,12 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  bool testButtonVisible = true;
+
   int selectedVoiceIndex = 0;
   TextEditingController textControler = TextEditingController();
   List<double> speeds = [0.5, 0.75, 1.0, 1.25, 1.50];
-  List<bool> toggleButtonValues = [false, false, true, false, false];
+  List<bool> toggleButtonValues = [false, false, false, false, false];
   List<String> options = ['0.5x', '0.75x', '1.0x', '1.25x', '1.50x'];
   final _myBox = Hive.box('myBox');
   EpubData epubData = EpubData();
@@ -26,18 +28,20 @@ class _SettingsPageState extends State<SettingsPage> {
   String _selectedVoice = "";
 
   final _formKey = GlobalKey<FormState>();
-  List<String> items = [];
+
+  List<String> seslendiriciler = [];
   List<String> names = [];
 
   String selectedValue = "";
-  late dynamic allTheVoices;
+
+  late List<dynamic> allTheVoices;
 
   List<Map<String, String>> voices = [];
 
-  Future<void> configureTts() async {
+  Future<void> getVoiceData() async {
     allTheVoices = await flutterTts.getVoices;
     voices = [];
-    items = [];
+    seslendiriciler = [];
     int i = 1;
     for (var voice in allTheVoices) {
       if (voice["locale"] == "tr-TR") {
@@ -45,26 +49,37 @@ class _SettingsPageState extends State<SettingsPage> {
           {
             "name": voice["name"],
             "locale": voice["locale"],
-            "item": "Seslendirici $i"
+            "seslendirici": "Seslendirici $i"
           },
         );
         i++;
       }
     }
+
     for (var i = 0; i < voices.length; i++) {
-      items.add(voices[i]["item"]!);
+      seslendiriciler.add(voices[i]["seslendirici"]!);
       names.add(voices[i]["name"]!);
     }
-    if (epubData.appData[0]["name"] == null) {
+    if (epubData.appData[0]["name"] == "") {
       epubData.appData[0]["name"] = names[0];
+      epubData.updateAppData();
     }
-    print(names);
-    print(selectedVoiceIndex);
+    setState(
+      () {
+        for (var i = 0; i < toggleButtonValues.length; i++) {
+          toggleButtonValues[i] = false;
+        }
+        toggleButtonValues[speeds.indexOf(epubData.appData[0]["speed"])] = true;
+      },
+    );
+  }
 
+  Future<void> configureTts() async {
     await flutterTts.setLanguage('tr-TR');
     await flutterTts.setSpeechRate(
       epubData.appData[0]["speed"],
     );
+    await flutterTts.setVolume(1.0);
 
     await flutterTts.setVoice(
       {
@@ -77,9 +92,25 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
+    flutterTts.awaitSpeakCompletion(true);
+    flutterTts.setCompletionHandler(
+      () {
+        setState(
+          () {
+            testButtonVisible = true;
+          },
+        );
+      },
+    );
     textControler.text =
         "Yükselme sınavlarına hazırlık kitaplarımız, tüm çalışanlarımıza bankacılık konuları ve Bankamız uygulamaları hakkında yol gösterici olmak, çalışanlarımızın teknik yetkinliklerini geliştirme çabalarını desteklemek amacı ile yayınlanmaktadır.";
-
+    getVoiceData().whenComplete(
+      () {
+        setState(
+          () {},
+        );
+      },
+    );
     configureTts().whenComplete(
       () {
         setState(() {});
@@ -90,9 +121,10 @@ class _SettingsPageState extends State<SettingsPage> {
       epubData.appData.add(
         {
           "dark": false,
+          "name": "",
           "voice": "Seslendirici 1",
-          "speed": 1.0,
           "locale": "tr-TR",
+          "speed": 0.75,
         },
       );
       epubData.updateAppData();
@@ -101,7 +133,7 @@ class _SettingsPageState extends State<SettingsPage> {
     }
     setState(
       () {
-        _selectedVoice = epubData.appData[0]["voice"];
+        _selectedVoice = epubData.appData[0]["seslendirici"];
       },
     );
   }
@@ -114,9 +146,7 @@ class _SettingsPageState extends State<SettingsPage> {
         );
       },
     );
-    String plainText = parseHtmlString(text);
-
-    await flutterTts.speak(plainText).whenComplete(
+    await flutterTts.speak(text).whenComplete(
       () {
         setState(
           () {},
@@ -126,6 +156,11 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void stopSpeaking() async {
+    setState(
+      () {
+        testButtonVisible = true;
+      },
+    );
     await flutterTts.stop().whenComplete(
       () {
         setState(
@@ -140,17 +175,25 @@ class _SettingsPageState extends State<SettingsPage> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Ayarlar'),
+          title: const Text(
+            'Ayarlar',
+            style: TextStyle(
+              fontFamily: 'Alkatra',
+              fontSize: 24.0,
+            ),
+          ),
           centerTitle: true,
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            epubData.appData[0]["voice"] = _selectedVoice;
+            stopSpeaking();
+            epubData.appData[0]["seslendirici"] = _selectedVoice;
+
             epubData.updateAppData();
             Navigator.pop(context);
           },
           child: Icon(
-            FontAwesomeIcons.floppyDisk,
+            FontAwesomeIcons.solidFloppyDisk,
             color: Theme.of(context).colorScheme.primary,
           ),
         ),
@@ -169,11 +212,13 @@ class _SettingsPageState extends State<SettingsPage> {
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.bold,
+                      fontSize: 18.0,
                     ),
                   ),
                   DropdownButton<String>(
+                    isExpanded: true,
                     value: _selectedVoice,
-                    items: items.map((String value) {
+                    items: seslendiriciler.map((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
                         child: Text(value),
@@ -182,10 +227,14 @@ class _SettingsPageState extends State<SettingsPage> {
                     onChanged: (newValue) {
                       setState(
                         () {
-                          selectedVoiceIndex = items.indexOf(newValue!);
+                          selectedVoiceIndex =
+                              seslendiriciler.indexOf(newValue!);
                           _selectedVoice = newValue;
+                          epubData.appData[0]["seslendirici"] =
+                              seslendiriciler[selectedVoiceIndex];
                           epubData.appData[0]["name"] =
-                              items[selectedVoiceIndex];
+                              names[selectedVoiceIndex];
+                          epubData.updateAppData();
                           configureTts();
                         },
                       );
@@ -199,6 +248,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.bold,
+                      fontSize: 18.0,
                     ),
                   ),
                   const SizedBox(
@@ -221,7 +271,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     },
                     children: options.map(
                       (option) {
-                        int index = options.indexOf(option);
                         return Text(option);
                       },
                     ).toList(),
@@ -234,13 +283,21 @@ class _SettingsPageState extends State<SettingsPage> {
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.bold,
+                      fontSize: 18.0,
                     ),
                   ),
+                  const SizedBox(
+                    height: 12.0,
+                  ),
                   TextField(
+                    style: const TextStyle(
+                      //color: Theme.of(context).colorScheme.primary,
+                      color: Colors.black,
+                    ),
                     readOnly: true,
                     controller: textControler,
-                    keyboardType: TextInputType.multiline,
-                    textCapitalization: TextCapitalization.sentences,
+                    //keyboardType: TextInputType.multiline,
+                    //textCapitalization: TextCapitalization.sentences,
                     minLines: 1,
                     maxLines: 6,
                     textAlign: TextAlign.justify,
@@ -248,7 +305,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     decoration: InputDecoration(
                       hintMaxLines: 1,
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 8.0, vertical: 10),
+                        horizontal: 8.0,
+                        vertical: 10,
+                      ),
                       hintStyle: const TextStyle(
                         fontSize: 16,
                       ),
@@ -273,12 +332,17 @@ class _SettingsPageState extends State<SettingsPage> {
                   const SizedBox(
                     height: 12.0,
                   ),
-                  ElevatedButton(
-                    onPressed: () {
-                      speakText(textControler.text);
-                    },
-                    child: const Text("Test Et"),
-                  ),
+                  testButtonVisible
+                      ? ElevatedButton(
+                          onPressed: () {
+                            if (testButtonVisible) {
+                              speakText(textControler.text);
+                              testButtonVisible = !testButtonVisible;
+                            }
+                          },
+                          child: const Text("Test Et"),
+                        )
+                      : Container(),
                 ],
               ),
             ),

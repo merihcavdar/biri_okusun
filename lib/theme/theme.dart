@@ -13,7 +13,7 @@ ThemeData darkMode = ThemeData(
   brightness: Brightness.dark,
   colorScheme: ColorScheme.dark(
     background: Colors.black,
-    primary: Colors.grey.shade900,
-    secondary: Colors.grey.shade500,
+    primary: Colors.grey.shade700,
+    secondary: Colors.grey.shade300,
   ),
 );

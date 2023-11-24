@@ -27,7 +27,7 @@ enum TtsState { playing, stopped, paused, continued }
 
 class _EpubReadAloudState extends State<EpubReadAloud> {
   late int loopCount;
-  final List<String> items = [];
+  final List<String> seslendiriciler = [];
   late dynamic allTheVoices;
 
   List<Map<String, String>> voices = [];
@@ -52,6 +52,10 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
     await flutterTts.setLanguage('tr-TR');
     await flutterTts.setSpeechRate(1.0);
     await flutterTts.setVolume(1.0);
+    await flutterTts.setIosAudioCategory(
+      IosTextToSpeechAudioCategory.playback,
+      [IosTextToSpeechAudioCategoryOptions.defaultToSpeaker],
+    );
 
     allTheVoices = await flutterTts.getVoices;
     int i = 1;
@@ -61,7 +65,7 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
           {
             "name": voice["name"],
             "locale": voice["locale"],
-            "item": "Seslendirici $i"
+            "seslendirici": "Seslendirici $i"
           },
         );
         i++;
@@ -70,7 +74,7 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
     String voiceName = "";
     for (var voice in voices) {
       voiceName = voice["name"]!;
-      if (voice["item"] == epubData.appData[0]["voice"]) {
+      if (voice["seslendirici"] == epubData.appData[0]["seslendirici"]) {
         await flutterTts.setVoice(
           {"name": voiceName, "locale": "tr-TR"},
         );

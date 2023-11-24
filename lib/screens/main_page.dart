@@ -15,7 +15,10 @@ import '../theme/theme_provider.dart';
 import 'package:provider/provider.dart';
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key, required this.isDark});
+  const MainPage({
+    super.key,
+    required this.isDark,
+  });
   final bool isDark;
 
   @override
@@ -23,16 +26,17 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  final List<String> items = [];
-  String selectedValue = "";
-  late dynamic allTheVoices;
-
+  List<String> seslendiriciler = [];
+  List<dynamic> allTheVoices = [];
   List<Map<String, String>> voices = [];
-  FlutterTts flutterTts = FlutterTts();
-
   String setVoice = "Seslendirici 1";
 
+  FlutterTts flutterTts = FlutterTts();
+
+  late String selectedValue;
+
   bool darkMode = false;
+
   final _myBox = Hive.box('myBox');
   EpubData epubData = EpubData();
   late String fileName;
@@ -47,8 +51,10 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<void> configureTts() async {
-    await flutterTts.setLanguage('tr-TR');
-    await flutterTts.setSpeechRate(1.0);
+    await flutterTts.setLanguage(epubData.appData[0]["locale"] ?? "tr-TR");
+    await flutterTts.setSpeechRate(epubData.appData[0]["speed"] ?? 0.75);
+    await flutterTts.setVolume(1.0);
+
     allTheVoices = await flutterTts.getVoices;
     int i = 1;
     for (var voice in allTheVoices) {
@@ -57,7 +63,7 @@ class _MainPageState extends State<MainPage> {
           {
             "name": voice["name"],
             "locale": voice["locale"],
-            "item": "Seslendirici $i"
+            "seslendirici": "Seslendirici $i"
           },
         );
         i++;
@@ -65,7 +71,7 @@ class _MainPageState extends State<MainPage> {
     }
 
     for (var i = 0; i < voices.length; i++) {
-      items.add(voices[i]["item"]!);
+      seslendiriciler.add(voices[i]["seslendirici"]!);
     }
   }
 
@@ -118,6 +124,7 @@ class _MainPageState extends State<MainPage> {
     super.initState();
     if (_myBox.get("EPUBDATA") == null) {
       epubData.createInitialData();
+      epubData.updateDatabase();
     } else {
       epubData.loadData();
     }
@@ -127,15 +134,17 @@ class _MainPageState extends State<MainPage> {
       epubData.appData.add(
         {
           "dark": false,
-          "voice": "Seslendirici 1",
-          "speed": 1.0,
+          "name": "",
+          "seslendirici": "Seslendirici 1",
           "locale": "tr-TR",
+          "speed": 0.75,
         },
       );
       epubData.updateAppData();
     } else {
       epubData.loadAppData();
     }
+
     configureTts().whenComplete(() {
       setState(
         () {},

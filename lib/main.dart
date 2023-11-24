@@ -26,43 +26,30 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool isDark = false;
+
   final _myBox = Hive.box('myBox');
   EpubData epubData = EpubData();
-
-  Future<void> getDarkBool() async {
-    isDark = epubData.appData[0]["dark"];
-  }
 
   @override
   void initState() {
     super.initState();
-    if (_myBox.get("EPUBDATA") == null) {
-      epubData.createInitialData();
-    } else {
-      epubData.loadData();
-    }
 
     if (_myBox.get("APPDATA") == null) {
       epubData.createAppData();
       epubData.appData.add(
         {
           "dark": false,
-          "voice": "Seslendirici 1",
-          "speed": 1.0,
+          "name": "",
           "locale": "tr-TR",
+          "seslendirici": "Seslendirici 1",
+          "speed": 0.75,
         },
       );
       epubData.updateAppData();
     } else {
       epubData.loadAppData();
     }
-    getDarkBool().whenComplete(
-      () {
-        setState(
-          () {},
-        );
-      },
-    );
+    isDark = epubData.appData[0]["dark"];
   }
 
   @override

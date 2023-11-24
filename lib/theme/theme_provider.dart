@@ -8,28 +8,33 @@ class ThemeProvider with ChangeNotifier {
   ThemeData get themeData => _themeData;
   bool getDarkMode = false;
 
+  final _myBox = Hive.box('myBox');
+  EpubData epubData = EpubData();
+
   set themeData(ThemeData themeData) {
     _themeData = themeData;
     notifyListeners();
   }
 
   ThemeData setInitialMode() {
-    final _myBox = Hive.box('myBox');
-    EpubData epubData = EpubData();
-
     if (_myBox.get("APPDATA") == null) {
       epubData.createAppData();
-      epubData.appData.add({
-        "dark": false,
-        "voice": "",
-        "speed": 1.0,
-      });
+      epubData.appData.add(
+        {
+          "dark": false,
+          "name": "",
+          "locale": "tr-TR",
+          "seslendirici": "Seslendirici 1",
+          "speed": 0.75,
+        },
+      );
       epubData.updateAppData();
     } else {
       epubData.loadAppData();
     }
 
     getDarkMode = epubData.appData[0]["dark"];
+
     if (getDarkMode) {
       return darkMode;
     } else {
