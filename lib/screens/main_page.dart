@@ -238,8 +238,17 @@ class _MainPageState extends State<MainPage> {
                   () {
                     epubData.bookList = [];
                     epubData.appData = [];
-                    epubData.updateDatabase();
+                    epubData.appData.add(
+                      {
+                        "dark": false,
+                        "name": "",
+                        "locale": "tr-TR",
+                        "seslendirici": "Seslendirici 1",
+                        "speed": 0.75,
+                      },
+                    );
                     epubData.updateAppData();
+                    epubData.updateDatabase();
                   },
                 );
               },
@@ -288,115 +297,167 @@ class _MainPageState extends State<MainPage> {
           ),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-        body: GridView.count(
-          crossAxisCount: 2,
-          children: List.generate(epubData.bookList.length, (index) {
-            return Center(
-              child: Slidable(
-                key: ValueKey(
-                  epubData.bookList[index]["fileName"],
-                ),
-                startActionPane: ActionPane(
-                  motion: const ScrollMotion(),
-                  dismissible: DismissiblePane(
-                    onDismissed: () {
-                      setState(() {
-                        epubData.deleteDatabase(index);
-                      });
-                    },
-                  ),
-                  children: [
-                    SlidableAction(
-                      onPressed: (BuildContext context) {
-                        setState(
-                          () {
-                            epubData.deleteDatabase(index);
-                          },
-                        );
-                      },
-                      backgroundColor: const Color(0xFFFE4A49),
-                      foregroundColor: Colors.white,
-                      icon: Icons.delete,
-                      label: 'Sil',
-                    ),
-                  ],
-                ),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.of(context)
-                        .push(
-                      MaterialPageRoute(
-                        builder: (context) => EpubReadAloud(
-                          fileToLoad: epubData.bookList[index]["fileName"],
-                          indexNo: index,
-                        ),
+        body: Column(
+          children: [
+            Expanded(
+              flex: 6,
+              child: GridView.count(
+                crossAxisCount: 2,
+                children: List.generate(epubData.bookList.length, (index) {
+                  return Center(
+                    child: Slidable(
+                      key: ValueKey(
+                        epubData.bookList[index]["fileName"],
                       ),
-                    )
-                        .then(
-                      (value) {
-                        setState(
-                          () {},
-                        );
-                      },
-                    );
-                  },
-                  child: Container(
-                    width: 200,
-                    height: 500.0,
-                    padding: const EdgeInsets.all(8.0),
-                    margin: const EdgeInsets.only(
-                      left: 8.0,
-                      top: 8.0,
-                      bottom: 8.0,
-                      right: 8.0,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      startActionPane: ActionPane(
+                        motion: const ScrollMotion(),
+                        dismissible: DismissiblePane(
+                          onDismissed: () {
+                            setState(() {
+                              epubData.deleteDatabase(index);
+                            });
+                          },
+                        ),
                         children: [
-                          Text(
-                            epubData.bookList[index]["bookTitle"],
-                            style: TextStyle(
-                              fontSize: 20.0,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.secondary,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(
-                            height: 12.0,
-                          ),
-                          Text(
-                            epubData.bookList[index]["author"],
-                            style: TextStyle(
-                              fontSize: 16.0,
-                              color: Theme.of(context).colorScheme.secondary,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(
-                            height: 20.0,
-                          ),
-                          Text(
-                            epubData.bookList[index]["lastChapter"],
-                            style: TextStyle(
-                              fontSize: 14.0,
-                              color: Theme.of(context).colorScheme.secondary,
-                            ),
-                            textAlign: TextAlign.center,
+                          SlidableAction(
+                            onPressed: (BuildContext context) {
+                              setState(
+                                () {
+                                  epubData.deleteDatabase(index);
+                                },
+                              );
+                            },
+                            backgroundColor: const Color(0xFFFE4A49),
+                            foregroundColor: Colors.white,
+                            icon: Icons.delete,
+                            label: 'Sil',
                           ),
                         ],
                       ),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context)
+                              .push(
+                            MaterialPageRoute(
+                              builder: (context) => EpubReadAloud(
+                                fileToLoad: epubData.bookList[index]
+                                    ["fileName"],
+                                indexNo: index,
+                              ),
+                            ),
+                          )
+                              .then(
+                            (value) {
+                              setState(
+                                () {},
+                              );
+                            },
+                          );
+                        },
+                        child: Container(
+                          width: 200,
+                          height: 500.0,
+                          padding: const EdgeInsets.all(8.0),
+                          margin: const EdgeInsets.only(
+                            left: 8.0,
+                            top: 8.0,
+                            bottom: 8.0,
+                            right: 8.0,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  epubData.bookList[index]["bookTitle"],
+                                  style: TextStyle(
+                                    fontSize: 20.0,
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        Theme.of(context).colorScheme.secondary,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(
+                                  height: 12.0,
+                                ),
+                                Text(
+                                  epubData.bookList[index]["author"],
+                                  style: TextStyle(
+                                    fontSize: 16.0,
+                                    color:
+                                        Theme.of(context).colorScheme.secondary,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(
+                                  height: 20.0,
+                                ),
+                                Text(
+                                  epubData.bookList[index]["lastChapter"],
+                                  style: TextStyle(
+                                    fontSize: 14.0,
+                                    color:
+                                        Theme.of(context).colorScheme.secondary,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
+                  );
+                }),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  padding: const EdgeInsets.all(
+                    8.0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Seslendiren:",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(epubData.appData[0]["seslendirici"])
+                        ],
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Text(
+                            "Konuşma Hızı:",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            "${epubData.appData[0]["speed"].toString()}x",
+                            textAlign: TextAlign.right,
+                          )
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
-            );
-          }),
+            ),
+          ],
         ),
       ),
     );

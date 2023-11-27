@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io' as io;
+import 'dart:io';
 import 'package:biri_okusun/utilities/disk.dart';
 import 'package:epub_parser/epub_parser.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -27,6 +28,7 @@ enum TtsState { playing, stopped, paused, continued }
 
 class _EpubReadAloudState extends State<EpubReadAloud> {
   late int loopCount;
+  int whichCount = 0;
   final List<String> seslendiriciler = [];
   late dynamic allTheVoices;
 
@@ -50,12 +52,25 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
   Future<void> configureTts() async {
     await flutterTts.awaitSpeakCompletion(true);
     await flutterTts.setLanguage('tr-TR');
-    await flutterTts.setSpeechRate(1.0);
-    await flutterTts.setVolume(1.0);
-    await flutterTts.setIosAudioCategory(
-      IosTextToSpeechAudioCategory.playback,
-      [IosTextToSpeechAudioCategoryOptions.defaultToSpeaker],
+    await flutterTts.setSpeechRate(
+      epubData.appData[0]["speed"],
     );
+    await flutterTts.setVolume(1.0);
+
+    await flutterTts.setVoice(
+      {
+        "name": epubData.appData[0]["name"],
+        "locale": epubData.appData[0]["locale"],
+      },
+    );
+
+    await flutterTts.setVolume(1.0);
+    if (Platform.isIOS) {
+      await flutterTts.setIosAudioCategory(
+        IosTextToSpeechAudioCategory.playback,
+        [IosTextToSpeechAudioCategoryOptions.defaultToSpeaker],
+      );
+    }
 
     allTheVoices = await flutterTts.getVoices;
     int i = 1;
@@ -162,8 +177,10 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
       epubData.appData.add(
         {
           "dark": false,
+          "name": "",
           "voice": "Seslendirici 1",
-          "speed": 1.0,
+          "locale": "tr-TR",
+          "speed": 0.75,
         },
       );
       epubData.updateAppData();
@@ -328,35 +345,55 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
                   nextChapter();
                 }),
             IconButton(
-                icon: const Icon(Icons.close),
-                //icon: const Icon(Icons.exit_to_app_outlined),
-                color: Colors.white,
-                onPressed: () {
-                  Navigator.of(context).pop();
-                }),
+              icon: const Icon(Icons.close),
+              //icon: const Icon(Icons.exit_to_app_outlined),
+              color: Colors.white,
+              onPressed: () {
+                setState(
+                  () {
+                    loopCount = 0;
+                    whichCount = 0;
+                    readingAloud = false;
+                  },
+                );
+                stopSpeaking();
+                Navigator.of(context).pop();
+              },
+            ),
           ],
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         floatingActionButton: FloatingActionButton(
           onPressed: () {
             if (readingAloud) {
+              setState(() {
+                loopCount = 0;
+                whichCount = 0;
+                readingAloud = false;
+              });
               stopSpeaking();
+            } else {
               setState(
                 () {
-                  readingAloud = false;
+                  loopCount = 0;
+                  whichCount = 0;
+                  readingAloud = true;
                 },
               );
-            } else {
               speakText(chapterContent!);
-              flutterTts.setCompletionHandler(() {
-                setState(() {
-                  nextChapter();
-                  speakText(chapterContent!);
-                });
-              });
-              setState(
+              flutterTts.setCompletionHandler(
                 () {
-                  readingAloud = true;
+                  whichCount++;
+                  setState(
+                    () {
+                      if (whichCount == (loopCount + 1)) {
+                        whichCount = 0;
+                        loopCount = 0;
+                        nextChapter();
+                        speakText(chapterContent!);
+                      }
+                    },
+                  );
                 },
               );
             }

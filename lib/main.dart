@@ -49,6 +49,18 @@ class _MyAppState extends State<MyApp> {
     } else {
       epubData.loadAppData();
     }
+    if (epubData.appData.isEmpty) {
+      epubData.appData.add(
+        {
+          "dark": false,
+          "name": "",
+          "locale": "tr-TR",
+          "seslendirici": "Seslendirici 1",
+          "speed": 0.75,
+        },
+      );
+      epubData.updateAppData();
+    }
     isDark = epubData.appData[0]["dark"];
   }
 
