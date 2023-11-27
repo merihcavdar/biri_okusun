@@ -13,6 +13,7 @@ import 'package:flutter/widgets.dart' as img;
 import '../utilities/disk.dart';
 import '../theme/theme_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:path/path.dart' as path;
 
 class MainPage extends StatefulWidget {
   const MainPage({
@@ -26,6 +27,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  io.Directory? downloadPath;
   List<String> seslendiriciler = [];
   List<dynamic> allTheVoices = [];
   List<Map<String, String>> voices = [];
@@ -119,6 +121,33 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
+  bool onlyCheckFile(String fileName) {
+    String filePath = "";
+    filePath = path.join(
+      downloadPath!.path,
+      fileName,
+    );
+    return io.File(filePath).existsSync();
+  }
+
+  checkFileExistance() async {
+    bool exists = false;
+    downloadPath = await getDownloadPath();
+    String filePath = "";
+
+    for (var i = epubData.bookList.length - 1; i >= 0; i--) {
+      filePath = path.join(
+        downloadPath!.path,
+        epubData.bookList[i]["fileName"],
+      );
+      exists = await io.File(filePath).exists();
+      if (!exists) {
+        epubData.bookList.removeAt(i);
+      }
+      epubData.updateDatabase();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -127,6 +156,7 @@ class _MainPageState extends State<MainPage> {
       epubData.updateDatabase();
     } else {
       epubData.loadData();
+      checkFileExistance();
     }
 
     if (_myBox.get("APPDATA") == null) {
@@ -336,23 +366,31 @@ class _MainPageState extends State<MainPage> {
                       ),
                       child: GestureDetector(
                         onTap: () {
-                          Navigator.of(context)
-                              .push(
-                            MaterialPageRoute(
-                              builder: (context) => EpubReadAloud(
-                                fileToLoad: epubData.bookList[index]
-                                    ["fileName"],
-                                indexNo: index,
+                          if (onlyCheckFile(
+                              epubData.bookList[index]["fileName"])) {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) {
+                                  return EpubReadAloud(
+                                    fileToLoad: epubData.bookList[index]
+                                        ["fileName"],
+                                    indexNo: index,
+                                  );
+                                },
                               ),
-                            ),
-                          )
-                              .then(
-                            (value) {
-                              setState(
-                                () {},
-                              );
-                            },
-                          );
+                            ).then(
+                              (value) {
+                                setState(
+                                  () {},
+                                );
+                              },
+                            );
+                          } else {
+                            setState(() {
+                              epubData.bookList.removeAt(index);
+                              epubData.updateDatabase();
+                            });
+                          }
                         },
                         child: Container(
                           width: 200,

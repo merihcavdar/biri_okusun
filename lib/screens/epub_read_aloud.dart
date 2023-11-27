@@ -165,6 +165,47 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
   @override
   void initState() {
     super.initState();
+    flutterTts.setStartHandler(() {
+      setState(() {
+        ttsState = TtsState.playing;
+      });
+    });
+
+    flutterTts.setCompletionHandler(() {
+      setState(() {
+        ttsState = TtsState.stopped;
+      });
+    });
+
+    flutterTts.setErrorHandler((msg) {
+      setState(() {
+        ttsState = TtsState.stopped;
+      });
+    });
+
+    flutterTts.setCancelHandler(
+      () {
+        setState(
+          () {
+            ttsState = TtsState.stopped;
+          },
+        );
+      },
+    );
+
+// Android, iOS and Web
+    flutterTts.setPauseHandler(() {
+      setState(() {
+        ttsState = TtsState.paused;
+      });
+    });
+
+    flutterTts.setContinueHandler(() {
+      setState(() {
+        ttsState = TtsState.continued;
+      });
+    });
+
     if (_myBox.get("EPUBDATA") == null) {
       epubData.createInitialData();
       epubData.updateDatabase();
