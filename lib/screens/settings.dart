@@ -1,5 +1,6 @@
+import 'dart:io';
+
 import 'package:biri_okusun/data/database.dart';
-import 'package:biri_okusun/utilities/disk.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -18,6 +19,7 @@ class _SettingsPageState extends State<SettingsPage> {
   int selectedVoiceIndex = 0;
   TextEditingController textControler = TextEditingController();
   List<double> speeds = [0.5, 0.75, 1.0, 1.25, 1.50];
+
   List<bool> toggleButtonValues = [false, false, false, false, false];
   List<String> options = ['0.5x', '0.75x', '1.0x', '1.25x', '1.50x'];
   final _myBox = Hive.box('myBox');
@@ -92,6 +94,23 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
+    if (Platform.isAndroid) {
+      speeds = [
+        0.25,
+        0.50,
+        0.75,
+        1.0,
+        1.25,
+      ];
+    } else if (Platform.isIOS) {
+      speeds = [
+        0.10,
+        0.20,
+        0.35,
+        0.50,
+        0.75,
+      ];
+    }
     flutterTts.awaitSpeakCompletion(true);
     flutterTts.setCompletionHandler(
       () {
