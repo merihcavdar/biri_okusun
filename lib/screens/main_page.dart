@@ -1,4 +1,5 @@
 import 'dart:io' as io;
+import 'dart:io';
 import 'package:biri_okusun/data/database.dart';
 import 'package:biri_okusun/screens/epub_read_aloud.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -27,6 +28,9 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  late double defaultSpeed;
+  List<double> speeds = [];
+  List<String> options = ['0.5x', '0.75x', '1.0x', '1.25x', '1.50x'];
   io.Directory? downloadPath;
   List<String> seslendiriciler = [];
   List<dynamic> allTheVoices = [];
@@ -113,12 +117,9 @@ class _MainPageState extends State<MainPage> {
             }
           },
         );
-      } else {
-        // User canceled the picker
-      }
-    } catch (e) {
-      print('Error picking file: $e');
-    }
+      } else {}
+      // ignore: empty_catches
+    } catch (e) {}
   }
 
   bool onlyCheckFile(String fileName) {
@@ -151,6 +152,28 @@ class _MainPageState extends State<MainPage> {
   @override
   void initState() {
     super.initState();
+    if (Platform.isAndroid) {
+      speeds = [
+        0.25,
+        0.50,
+        0.75,
+        1.0,
+        1.25,
+      ];
+    } else if (Platform.isIOS) {
+      speeds = [
+        0.10,
+        0.20,
+        0.35,
+        0.50,
+        0.75,
+      ];
+    }
+    if (Platform.isAndroid) {
+      defaultSpeed = 0.5;
+    } else if (Platform.isIOS) {
+      defaultSpeed = 0.2;
+    }
     if (_myBox.get("EPUBDATA") == null) {
       epubData.createInitialData();
       epubData.updateDatabase();
@@ -167,7 +190,7 @@ class _MainPageState extends State<MainPage> {
           "name": "",
           "seslendirici": "Seslendirici 1",
           "locale": "tr-TR",
-          "speed": 0.75,
+          "speed": defaultSpeed,
         },
       );
       epubData.updateAppData();
@@ -274,7 +297,7 @@ class _MainPageState extends State<MainPage> {
                         "name": "",
                         "locale": "tr-TR",
                         "seslendirici": "Seslendirici 1",
-                        "speed": 0.75,
+                        "speed": defaultSpeed,
                       },
                     );
                     epubData.updateAppData();
@@ -339,7 +362,7 @@ class _MainPageState extends State<MainPage> {
                       key: ValueKey(
                         epubData.bookList[index]["fileName"],
                       ),
-                      startActionPane: ActionPane(
+                      endActionPane: ActionPane(
                         motion: const ScrollMotion(),
                         dismissible: DismissiblePane(
                           onDismissed: () {
@@ -485,7 +508,9 @@ class _MainPageState extends State<MainPage> {
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            "${epubData.appData[0]["speed"].toString()}x",
+                            options[speeds.indexOf(
+                              epubData.appData[0]["speed"],
+                            )],
                             textAlign: TextAlign.right,
                           )
                         ],

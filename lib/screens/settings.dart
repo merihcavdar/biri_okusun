@@ -14,11 +14,12 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  late double defaultSpeed;
   bool testButtonVisible = true;
 
   int selectedVoiceIndex = 0;
   TextEditingController textControler = TextEditingController();
-  List<double> speeds = [0.5, 0.75, 1.0, 1.25, 1.50];
+  List<double> speeds = [];
 
   List<bool> toggleButtonValues = [false, false, false, false, false];
   List<String> options = ['0.5x', '0.75x', '1.0x', '1.25x', '1.50x'];
@@ -111,6 +112,11 @@ class _SettingsPageState extends State<SettingsPage> {
         0.75,
       ];
     }
+    if (Platform.isAndroid) {
+      defaultSpeed = 0.5;
+    } else if (Platform.isIOS) {
+      defaultSpeed = 0.2;
+    }
     flutterTts.awaitSpeakCompletion(true);
     flutterTts.setCompletionHandler(
       () {
@@ -143,7 +149,7 @@ class _SettingsPageState extends State<SettingsPage> {
           "name": "",
           "voice": "Seslendirici 1",
           "locale": "tr-TR",
-          "speed": 0.75,
+          "speed": defaultSpeed,
         },
       );
       epubData.updateAppData();

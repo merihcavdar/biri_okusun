@@ -17,6 +17,7 @@ String parseHtmlString(String htmlString) {
   return parsedString;
 }
 
+// ignore: unused_element
 final _myBox = Hive.box('myBox');
 EpubData epubData = EpubData();
 
@@ -86,9 +87,8 @@ Future<void> readEPUBFile(String epubFilePath) async {
       FlutterTts flutterTts = FlutterTts();
       await flutterTts.speak(chapter.ContentFileName!);
     }
-  } catch (e) {
-    print("Error reading EPUB file: $e");
-  }
+    // ignore: empty_catches
+  } catch (e) {}
 }
 
 Future<List<String>> getEpubChapters(String fileToLoad) async {

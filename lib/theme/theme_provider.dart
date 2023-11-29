@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:biri_okusun/data/database.dart';
 import 'package:flutter/material.dart';
 import 'theme.dart';
@@ -25,7 +27,7 @@ class ThemeProvider with ChangeNotifier {
           "name": "",
           "locale": "tr-TR",
           "seslendirici": "Seslendirici 1",
-          "speed": 0.75,
+          "speed": Platform.isAndroid ? 0.5 : 0.2,
         },
       );
       epubData.updateAppData();

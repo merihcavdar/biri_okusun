@@ -27,6 +27,7 @@ class EpubReadAloud extends StatefulWidget {
 enum TtsState { playing, stopped, paused, continued }
 
 class _EpubReadAloudState extends State<EpubReadAloud> {
+  late double defaultSpeed;
   late int loopCount;
   int whichCount = 0;
   final List<String> seslendiriciler = [];
@@ -165,6 +166,12 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
   @override
   void initState() {
     super.initState();
+    if (Platform.isAndroid) {
+      defaultSpeed = 0.5;
+    } else if (Platform.isIOS) {
+      defaultSpeed = 0.2;
+    }
+
     flutterTts.setStartHandler(() {
       setState(() {
         ttsState = TtsState.playing;
@@ -200,11 +207,15 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
       });
     });
 
-    flutterTts.setContinueHandler(() {
-      setState(() {
-        ttsState = TtsState.continued;
-      });
-    });
+    flutterTts.setContinueHandler(
+      () {
+        setState(
+          () {
+            ttsState = TtsState.continued;
+          },
+        );
+      },
+    );
 
     if (_myBox.get("EPUBDATA") == null) {
       epubData.createInitialData();
@@ -221,7 +232,7 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
           "name": "",
           "voice": "Seslendirici 1",
           "locale": "tr-TR",
-          "speed": 0.75,
+          "speed": defaultSpeed,
         },
       );
       epubData.updateAppData();
@@ -450,7 +461,19 @@ class _EpubReadAloudState extends State<EpubReadAloud> {
                 ),
         ),
         body: SingleChildScrollView(
-          child: HtmlWidget(chapterContent!),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(
+                  8.0,
+                ),
+                child: HtmlWidget(chapterContent!),
+              ),
+              const SizedBox(
+                height: 60.0,
+              )
+            ],
+          ),
         ),
       );
 }

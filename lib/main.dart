@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:biri_okusun/data/database.dart';
 import 'package:biri_okusun/theme/theme_provider.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +9,7 @@ import 'package:provider/provider.dart';
 
 void main() async {
   await Hive.initFlutter();
+  // ignore: unused_local_variable
   var box = await Hive.openBox('myBox');
 
   runApp(
@@ -25,6 +28,8 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  late double defaultSpeed;
+
   bool isDark = false;
 
   final _myBox = Hive.box('myBox');
@@ -33,7 +38,11 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-
+    if (Platform.isAndroid) {
+      defaultSpeed = 0.5;
+    } else if (Platform.isIOS) {
+      defaultSpeed = 0.2;
+    }
     if (_myBox.get("APPDATA") == null) {
       epubData.createAppData();
       epubData.appData.add(
@@ -42,7 +51,7 @@ class _MyAppState extends State<MyApp> {
           "name": "",
           "locale": "tr-TR",
           "seslendirici": "Seslendirici 1",
-          "speed": 0.75,
+          "speed": defaultSpeed,
         },
       );
       epubData.updateAppData();
@@ -56,7 +65,7 @@ class _MyAppState extends State<MyApp> {
           "name": "",
           "locale": "tr-TR",
           "seslendirici": "Seslendirici 1",
-          "speed": 0.75,
+          "speed": defaultSpeed,
         },
       );
       epubData.updateAppData();
